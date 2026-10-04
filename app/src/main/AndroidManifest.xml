@@ -1,18 +1,80 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" ?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application
-        android:allowBackup="false"
-        android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name"
-        android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE"/>
+        </intent>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH"/>
+        </intent>
+    </queries>
+    <application android:allowBackup="false" android:networkSecurityConfig="@xml/network_security_config" android:icon="@drawable/cue_gray_gear" android:label="@string/app_name" android:supportsRtl="true" android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths"/>
+        </provider>
+        <activity android:name=".MainActivity" android:exported="true" android:windowSoftInputMode="adjustResize">
         </activity>
+        <activity-alias android:name=".launcher.GrayGear" android:targetActivity=".MainActivity" android:enabled="true" android:exported="true" android:icon="@drawable/cue_gray_gear" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".launcher.GraySquare" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/cue_gray_square" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".launcher.BlueBubble" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/cue_blue_bubble" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".launcher.BlueTriangle" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/cue_blue_triangle" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".launcher.RedHeart" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/cue_red_heart" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".launcher.RedFlame" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/cue_red_flame" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".launcher.YellowStar" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/cue_yellow_star" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".launcher.YellowCircle" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/cue_yellow_circle" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".launcher.BrownBell" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/cue_brown_bell" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".launcher.BrownBriefcase" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/cue_brown_briefcase" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
     </application>
 </manifest>

@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Hello Android"
+rootProject.name = "Cue"
 include(":app")

@@ -5,15 +5,17 @@ plugins {
 }
 
 android {
-    namespace = "com.example.helloandroid"
+    namespace = "dev.cue.rebuild"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.helloandroid"
+        applicationId = "dev.cue.rebuild"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.1.0"
+        buildConfigField("String", "BACKEND_URL", "\"http://127.0.0.1:2002\"")
     }
 
     compileOptions {
@@ -27,11 +29,20 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
 }
 
 dependencies {
+    implementation("com.caverock:androidsvg-aar:1.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2025.11.00"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation(platform("androidx.compose:compose-bom:2025.11.00"))
