@@ -18,7 +18,9 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.semantics.*
@@ -30,6 +32,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Composer(
     value: String,
@@ -54,8 +57,17 @@ fun Composer(
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     val density = LocalDensity.current
-    // Floating and hardware keyboards don't produce a bottom IME inset.
-    val editing = focused || value.isNotEmpty() || formatting || preview || expanded
+    // Visibility also works for floating keyboards, whose bottom inset is zero.
+    val keyboardVisible = WindowInsets.isImeVisible
+    val hardwareKeyboard =
+        LocalConfiguration.current.keyboard != android.content.res.Configuration.KEYBOARD_NOKEYS
+    val editing = focused && (keyboardVisible || hardwareKeyboard) || preview
+    LaunchedEffect(keyboardVisible) {
+        if (!keyboardVisible && !preview && !hardwareKeyboard) {
+            expanded = false
+            formatting = false
+        }
+    }
     val send = value.isNotBlank() || canSend
     LaunchedEffect(value) {
         if (editor.text != value) {
@@ -87,31 +99,37 @@ fun Composer(
             else -> formatting = false
         }
     }
-    BoxWithConstraints(
-        Modifier.fillMaxWidth()
-            .excludeNavigationGestures()
-            .testTag("composer")
-            .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp)
-    ) {
+    BoxWithConstraints(Modifier.fillMaxWidth().excludeNavigationGestures().testTag("composer")) {
         // The chat provides the space above the IME. Leave room for the grip and action row.
-        val expandedFieldHeight = (maxHeight - 108.dp).coerceIn(56.dp, 520.dp)
+        val expandedFieldHeight = (maxHeight - 92.dp).coerceIn(56.dp, 520.dp)
+        val border = Cue.Ink.copy(alpha = .10f)
         Column(
             Modifier.fillMaxWidth()
-                .shadow(
-                    20.dp,
-                    RoundedCornerShape(28.dp),
-                    ambientColor = Color.Black.copy(alpha = .08f),
-                    spotColor = Color.Black.copy(alpha = .05f),
+                .background(
+                    Cue.ComposerSurface,
+                    RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
                 )
-                .background(Cue.ComposerSurface, RoundedCornerShape(28.dp))
-                .border(1.dp, Cue.Ink.copy(alpha = .10f), RoundedCornerShape(28.dp))
+                .drawBehind {
+                    // An open outline joins the keyboard/system bar without a lower boundary.
+                    val r = 20.dp.toPx()
+                    val path =
+                        Path().apply {
+                            moveTo(0f, size.height)
+                            lineTo(0f, r)
+                            arcTo(Rect(0f, 0f, r * 2, r * 2), 180f, 90f, false)
+                            lineTo(size.width - r, 0f)
+                            arcTo(Rect(size.width - r * 2, 0f, size.width, r * 2), 270f, 90f, false)
+                            lineTo(size.width, size.height)
+                        }
+                    drawPath(path, border, style = Stroke(1.dp.toPx()))
+                }
                 .animateContentSize(tween(180))
                 .padding(6.dp)
         ) {
             if (editing) {
                 Box(
                     Modifier.fillMaxWidth()
-                        .height(32.dp)
+                        .height(16.dp)
                         .clip(RoundedCornerShape(16.dp))
                         .clickable(role = Role.Button) { expanded = !expanded }
                         .draggable(
@@ -134,12 +152,6 @@ fun Composer(
                         Modifier.size(36.dp, 3.dp)
                             .background(Cue.Ink.copy(alpha = .14f), CircleShape)
                     )
-                    Text(
-                        if (expanded) "Collapse" else "Expand",
-                        style = Cue.Caption,
-                        color = Cue.Muted,
-                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp),
-                    )
                 }
             }
             Row(
@@ -156,7 +168,10 @@ fun Composer(
                 Box(
                     Modifier.weight(1f)
                         .padding(horizontal = 12.dp, vertical = if (editing) 8.dp else 0.dp)
-                        .then(if (expanded) Modifier.height(expandedFieldHeight) else Modifier)
+                        .then(
+                            if (expanded && editing) Modifier.height(expandedFieldHeight)
+                            else Modifier
+                        )
                 ) {
                     BasicTextField(
                         editor,
@@ -166,7 +181,7 @@ fun Composer(
                             .onFocusChanged { focused = it.isFocused }
                             .then(
                                 if (preview) Modifier.height(0.dp).clearAndSetSemantics {}
-                                else if (expanded) Modifier.fillMaxHeight() else Modifier
+                                else if (expanded && editing) Modifier.fillMaxHeight() else Modifier
                             )
                             .semantics { if (!preview) contentDescription = placeholder }
                             .onPreviewKeyEvent { event ->
@@ -191,7 +206,7 @@ fun Composer(
                         readOnly = preview,
                         textStyle = Cue.ChatText.copy(color = Cue.Ink),
                         cursorBrush = SolidColor(Cue.Blue),
-                        maxLines = if (expanded) Int.MAX_VALUE else 5,
+                        maxLines = if (!editing) 1 else if (expanded) Int.MAX_VALUE else 5,
                         decorationBox = {
                             if (value.isEmpty() && !preview)
                                 Text(

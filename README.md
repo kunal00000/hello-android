@@ -23,8 +23,10 @@ included in the APK. Existing local chat history remains on the phone.
 Production backend setup, token rotation, quotas, and private uploads are documented
 in the sibling [MOBILE_DEPLOYMENT.md](../superintelligence/MOBILE_DEPLOYMENT.md).
 
-Chat bubbles render Markdown for both speakers. The composer stays compact when idle,
-then places the draft above an action row while writing. Tap or drag its grip to
+Chat bubbles render Markdown for both speakers. The full-width composer docks to the
+bottom with rounded top corners and an open lower edge. It stays compact with the
+keyboard closed, even with a draft, then reveals the action row when the keyboard
+opens. Tap or drag its unlabeled grip to
 expand/collapse the writing area. **Aa** switches the action row to selection-aware
 formatting shortcuts; **Preview** uses the same renderer as chat bubbles. Return
 continues lists and quotes; Return on an empty item exits them. Ctrl+B, Ctrl+I, and

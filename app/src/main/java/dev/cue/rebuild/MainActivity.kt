@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -108,12 +111,24 @@ fun CueApp(state: CueState) {
                 Screen.IntegrationDetail -> Cue.Settings
                 else -> Cue.Page
             }
+        val navigationBarHeight =
+            WindowInsets.navigationBars.getBottom(LocalDensity.current).toFloat()
+        val composerSurface = Cue.ComposerSurface
         Box(
             Modifier.fillMaxSize()
                 .background(
                     if (state.appearance == "Dark") MaterialTheme.colorScheme.background
                     else background
                 )
+                .drawBehind {
+                    if (current.screen == Screen.Chat) {
+                        drawRect(
+                            composerSurface,
+                            topLeft = Offset(0f, size.height - navigationBarHeight),
+                            size = Size(size.width, navigationBarHeight),
+                        )
+                    }
+                }
                 // Move the background behind the system bars with its page, keeping controls inset.
                 .systemBarsPadding()
         ) {

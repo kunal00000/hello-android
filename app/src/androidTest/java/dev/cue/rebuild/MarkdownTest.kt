@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -125,6 +126,64 @@ class MarkdownTest {
             .assert(
                 SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString(""))
             )
+    }
+
+    @Test
+    fun hidingKeyboardReturnsToADockedCompactDraft() {
+        var draft by mutableStateOf("")
+        compose.setContent {
+            CueTheme {
+                Column(
+                    Modifier.fillMaxSize()
+                        .safeDrawingPadding()
+                        .imePadding()
+                        .testTag("composer-host"),
+                    verticalArrangement = Arrangement.Bottom,
+                ) {
+                    Composer(draft, { draft = it }, "Message", onSend = {}, onAdd = {}, onMic = {})
+                }
+            }
+        }
+        compose.onNodeWithContentDescription("Message").performTextInput("Keep this draft")
+        compose.waitUntil(5000) {
+            compose
+                .onAllNodesWithContentDescription("Markdown formatting")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        compose.onNodeWithText("Expand").assertDoesNotExist()
+        compose.onNodeWithText("Collapse").assertDoesNotExist()
+        compose.runOnUiThread {
+            androidx.core.view.WindowCompat.getInsetsController(
+                    compose.activity.window,
+                    compose.activity.window.decorView,
+                )
+                .hide(androidx.core.view.WindowInsetsCompat.Type.ime())
+        }
+        compose.waitUntil(5000) {
+            compose
+                .onAllNodesWithContentDescription("Markdown formatting")
+                .fetchSemanticsNodes()
+                .isEmpty()
+        }
+        compose.onNodeWithContentDescription("Add attachment").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Send message").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Expand composer").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Message").assertTextEquals("Keep this draft")
+        val composer = compose.onNodeWithTag("composer").fetchSemanticsNode().boundsInRoot
+        val host = compose.onNodeWithTag("composer-host").fetchSemanticsNode().boundsInRoot
+        assertEquals(host.left, composer.left, 1f)
+        assertEquals(host.right, composer.right, 1f)
+        assertEquals(host.bottom, composer.bottom, 1f)
+        capture("composer-docked-draft")
+        compose.onNodeWithContentDescription("Message").performClick()
+        compose.waitUntil(5000) {
+            compose
+                .onAllNodesWithContentDescription("Markdown formatting")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("Message").assertTextEquals("Keep this draft")
     }
 
     @Test
