@@ -57,8 +57,13 @@ fun Composer(
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     val density = LocalDensity.current
-    // Visibility also works for floating keyboards, whose bottom inset is zero.
-    val keyboardVisible = WindowInsets.isImeVisible
+    // React when dismissal starts, rather than waiting for the final visibility update.
+    // Floating keyboards have no bottom inset, so retain their explicit visibility signal.
+    val keyboardSource = WindowInsets.imeAnimationSource.getBottom(density)
+    val keyboardTarget = WindowInsets.imeAnimationTarget.getBottom(density)
+    val keyboardVisible =
+        if (keyboardSource > 0 || keyboardTarget > 0) keyboardTarget > 0
+        else WindowInsets.isImeVisible
     val hardwareKeyboard =
         LocalConfiguration.current.keyboard != android.content.res.Configuration.KEYBOARD_NOKEYS
     val editing = focused && (keyboardVisible || hardwareKeyboard) || preview
@@ -123,7 +128,8 @@ fun Composer(
                         }
                     drawPath(path, border, style = Stroke(1.dp.toPx()))
                 }
-                .animateContentSize(tween(180))
+                // IME padding already supplies the closing motion. Don't append another resize.
+                .then(if (editing) Modifier.animateContentSize(tween(180)) else Modifier)
                 .padding(6.dp)
         ) {
             if (editing) {

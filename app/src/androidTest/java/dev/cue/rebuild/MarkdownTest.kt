@@ -144,6 +144,8 @@ class MarkdownTest {
                 }
             }
         }
+        val compactHeight =
+            compose.onNodeWithTag("composer").fetchSemanticsNode().boundsInRoot.height
         compose.onNodeWithContentDescription("Message").performTextInput("Keep this draft")
         compose.waitUntil(5000) {
             compose
@@ -153,6 +155,8 @@ class MarkdownTest {
         }
         compose.onNodeWithText("Expand").assertDoesNotExist()
         compose.onNodeWithText("Collapse").assertDoesNotExist()
+        // Drive frames explicitly so an extra resize after keyboard dismissal can't hide in idle.
+        compose.mainClock.autoAdvance = false
         compose.runOnUiThread {
             androidx.core.view.WindowCompat.getInsetsController(
                     compose.activity.window,
@@ -161,11 +165,19 @@ class MarkdownTest {
                 .hide(androidx.core.view.WindowInsetsCompat.Type.ime())
         }
         compose.waitUntil(5000) {
+            compose.mainClock.advanceTimeByFrame()
             compose
                 .onAllNodesWithContentDescription("Markdown formatting")
                 .fetchSemanticsNodes()
                 .isEmpty()
         }
+        assertEquals(
+            "Composer must already be compact when its keyboard tools disappear",
+            compactHeight,
+            compose.onNodeWithTag("composer").fetchSemanticsNode().boundsInRoot.height,
+            1f,
+        )
+        compose.mainClock.autoAdvance = true
         compose.onNodeWithContentDescription("Add attachment").assertIsDisplayed()
         compose.onNodeWithContentDescription("Send message").assertIsDisplayed()
         compose.onNodeWithContentDescription("Expand composer").assertDoesNotExist()
