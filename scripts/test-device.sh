@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-test_class=dev.cue.rebuild.CueFlowTest,dev.cue.rebuild.ChatRecoveryTest,dev.cue.rebuild.GestureNavigationTest,dev.cue.rebuild.BackendConnectionTest,dev.cue.rebuild.IntegrationsTest
+test_class=dev.cue.rebuild.CueFlowTest,dev.cue.rebuild.ChatRecoveryTest,dev.cue.rebuild.GestureNavigationTest,dev.cue.rebuild.BackendConnectionTest,dev.cue.rebuild.IntegrationsTest,dev.cue.rebuild.MarkdownTest
 if [[ "${1:-}" == '--live' ]]; then
   test_class=dev.cue.rebuild.LiveBackendTest
   curl --fail --silent http://127.0.0.1:2002/health

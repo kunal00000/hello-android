@@ -12,7 +12,6 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.*
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -461,104 +460,8 @@ fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
                     }
                 }
                 if (message.text.isNotEmpty())
-                    Text(
-                        message.text,
-                        color = if (message.user) Color.White else Cue.Ink,
-                        style = Cue.ChatText,
-                    )
+                    MarkdownText(message.text, color = if (message.user) Color.White else Cue.Ink)
             }
-        }
-    }
-}
-
-@Composable
-fun Composer(
-    value: String,
-    onChange: (String) -> Unit,
-    placeholder: String,
-    busy: Boolean = false,
-    onSend: () -> Unit,
-    onStop: () -> Unit = {},
-    onAdd: (() -> Unit)? = null,
-    onMic: (() -> Unit)? = null,
-    canSend: Boolean = false,
-) {
-    Row(
-        Modifier.fillMaxWidth()
-            .excludeNavigationGestures()
-            .testTag("composer")
-            .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp)
-            .shadow(
-                20.dp,
-                RoundedCornerShape(28.dp),
-                ambientColor = Color.Black.copy(alpha = .08f),
-                spotColor = Color.Black.copy(alpha = .05f),
-            )
-            .background(Cue.ComposerSurface, RoundedCornerShape(28.dp))
-            .border(1.dp, Cue.Ink.copy(alpha = .10f), RoundedCornerShape(28.dp))
-            .heightIn(min = 48.dp)
-            .padding(horizontal = 6.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (onAdd != null)
-            Box(
-                Modifier.size(36.dp).clickable(role = Role.Button, onClick = onAdd).semantics {
-                    contentDescription = "Add attachment"
-                },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Glyph.Plus, size = 24.dp)
-            }
-        else Spacer(Modifier.width(10.dp))
-        BasicTextField(
-            value,
-            onChange,
-            Modifier.weight(1f).padding(horizontal = 8.dp).semantics {
-                contentDescription = placeholder
-            },
-            textStyle = Cue.ChatText.copy(color = LocalContentColor.current),
-            cursorBrush = SolidColor(Cue.Blue),
-            maxLines = 5,
-            decorationBox = {
-                if (value.isEmpty())
-                    Text(
-                        placeholder,
-                        style = Cue.ChatText,
-                        color = Cue.Faint,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                it()
-            },
-        )
-        val send = value.isNotBlank() || canSend
-        Box(
-            Modifier.size(40.dp)
-                .clip(CircleShape)
-                .background(
-                    if (send) Cue.Blue else if (onAdd == null) Cue.Bubble else Color.Transparent
-                )
-                .semantics {
-                    contentDescription =
-                        if (busy) "Stop generating"
-                        else if (send || onMic == null) "Send message" else "Voice input"
-                }
-                .clickable(enabled = busy || send || onMic != null) {
-                    when {
-                        busy -> onStop()
-                        send -> onSend()
-                        else -> onMic?.invoke()
-                    }
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                if (busy) Glyph.Stop else if (send || onMic == null) Glyph.Up else Glyph.Mic,
-                tint =
-                    if (send) Color.White
-                    else if (onMic == null) Cue.Faint else LocalContentColor.current,
-                size = 22.dp,
-            )
         }
     }
 }

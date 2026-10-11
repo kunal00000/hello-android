@@ -23,6 +23,18 @@ included in the APK. Existing local chat history remains on the phone.
 Production backend setup, token rotation, quotas, and private uploads are documented
 in the sibling [MOBILE_DEPLOYMENT.md](../superintelligence/MOBILE_DEPLOYMENT.md).
 
+Chat bubbles render Markdown for both speakers. The composer’s **Aa** control opens
+selection-aware formatting shortcuts and a preview using the same renderer. Return
+continues lists and quotes; Return on an empty item exits them. Ctrl+B, Ctrl+I, and
+Ctrl+K work with a hardware keyboard. Drafts, sent messages, and message copying keep
+the original Markdown source. Code blocks have a separate **Copy code** action.
+Rendering uses [Multiplatform Markdown Renderer](https://github.com/mikepenz/multiplatform-markdown-renderer)
+0.33.0, compatible with this app’s Kotlin and Compose versions.
+
+Page swipes commit after 20% of the screen width; a deliberate reverse flick still
+cancels. Message bubbles, composer controls, and horizontal content scrollers retain
+their own gestures.
+
 For optional loopback development, use Node 24 and the sibling backend checkout:
 
 ```sh

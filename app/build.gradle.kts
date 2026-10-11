@@ -46,6 +46,8 @@ android {
 }
 
 dependencies {
+    implementation("com.mikepenz:multiplatform-markdown-renderer-m3:0.33.0")
+    implementation("com.mikepenz:multiplatform-markdown-renderer-coil2:0.33.0")
     implementation("com.caverock:androidsvg-aar:1.4")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
