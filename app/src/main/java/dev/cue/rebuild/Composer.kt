@@ -1,7 +1,12 @@
 package dev.cue.rebuild
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.foundation.text.BasicTextField
@@ -12,6 +17,7 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.*
@@ -42,211 +48,321 @@ fun Composer(
         }
     var formatting by rememberSaveable { mutableStateOf(false) }
     var preview by rememberSaveable { mutableStateOf(false) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    var focused by remember { mutableStateOf(false) }
+    var handleDrag by remember { mutableFloatStateOf(0f) }
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
+    val density = LocalDensity.current
+    // Floating and hardware keyboards don't produce a bottom IME inset.
+    val editing = focused || value.isNotEmpty() || formatting || preview || expanded
+    val send = value.isNotBlank() || canSend
     LaunchedEffect(value) {
-        if (editor.text != value) editor = TextFieldValue(value, TextRange(value.length))
+        if (editor.text != value) {
+            if (value.isEmpty()) {
+                expanded = false
+                formatting = false
+            }
+            editor = TextFieldValue(value, TextRange(value.length))
+        }
         if (value.isEmpty()) preview = false
     }
     fun edit(next: TextFieldValue) {
         editor = next
         if (next.text != value) onChange(next.text)
     }
-    fun applyFormat(format: MarkdownFormat) {
-        edit(formatMarkdown(editor, format))
+    fun resumeEditing() {
+        preview = false
         focus.requestFocus()
         keyboard?.show()
     }
-    Column(
+    fun applyFormat(format: MarkdownFormat) {
+        edit(formatMarkdown(editor, format))
+        resumeEditing()
+    }
+    BackHandler(expanded || preview || formatting) {
+        when {
+            preview -> resumeEditing()
+            expanded -> expanded = false
+            else -> formatting = false
+        }
+    }
+    BoxWithConstraints(
         Modifier.fillMaxWidth()
             .excludeNavigationGestures()
             .testTag("composer")
             .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp)
-            .shadow(
-                20.dp,
-                RoundedCornerShape(28.dp),
-                ambientColor = Color.Black.copy(alpha = .08f),
-                spotColor = Color.Black.copy(alpha = .05f),
-            )
-            .background(Cue.ComposerSurface, RoundedCornerShape(28.dp))
-            .border(1.dp, Cue.Ink.copy(alpha = .10f), RoundedCornerShape(28.dp))
-            .padding(horizontal = 6.dp, vertical = 6.dp)
     ) {
-        AnimatedVisibility(formatting) {
-            Column {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Row(
-                        Modifier.weight(1f)
-                            .horizontalScroll(rememberScrollState())
-                            .testTag("markdown-tools")
-                    ) {
-                        MarkdownFormat.entries.forEach { format ->
-                            Box(
-                                Modifier.height(40.dp)
-                                    .widthIn(min = 40.dp)
-                                    .clickable(enabled = !preview, role = Role.Button) {
-                                        applyFormat(format)
-                                    }
-                                    .semantics { contentDescription = format.description }
-                                    .padding(horizontal = 8.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    format.label,
-                                    color = Cue.Ink.copy(alpha = if (preview) .35f else 1f),
-                                    fontSize = 15.sp,
-                                    fontWeight =
-                                        if (format == MarkdownFormat.Bold) FontWeight.Bold
-                                        else FontWeight.Medium,
-                                    fontStyle =
-                                        if (format == MarkdownFormat.Italic) FontStyle.Italic
-                                        else FontStyle.Normal,
-                                    textDecoration =
-                                        if (format == MarkdownFormat.Strike)
-                                            TextDecoration.LineThrough
-                                        else TextDecoration.None,
+        // The chat provides the space above the IME. Leave room for the grip and action row.
+        val expandedFieldHeight = (maxHeight - 108.dp).coerceIn(56.dp, 520.dp)
+        Column(
+            Modifier.fillMaxWidth()
+                .shadow(
+                    20.dp,
+                    RoundedCornerShape(28.dp),
+                    ambientColor = Color.Black.copy(alpha = .08f),
+                    spotColor = Color.Black.copy(alpha = .05f),
+                )
+                .background(Cue.ComposerSurface, RoundedCornerShape(28.dp))
+                .border(1.dp, Cue.Ink.copy(alpha = .10f), RoundedCornerShape(28.dp))
+                .animateContentSize(tween(180))
+                .padding(6.dp)
+        ) {
+            if (editing) {
+                Box(
+                    Modifier.fillMaxWidth()
+                        .height(32.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable(role = Role.Button) { expanded = !expanded }
+                        .draggable(
+                            state = rememberDraggableState { handleDrag += it },
+                            orientation = Orientation.Vertical,
+                            onDragStarted = { handleDrag = 0f },
+                            onDragStopped = {
+                                val threshold = with(density) { 24.dp.toPx() }
+                                if (handleDrag < -threshold) expanded = true
+                                else if (handleDrag > threshold) expanded = false
+                            },
+                        )
+                        .semantics {
+                            contentDescription =
+                                if (expanded) "Collapse composer" else "Expand composer"
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        Modifier.size(36.dp, 3.dp)
+                            .background(Cue.Ink.copy(alpha = .14f), CircleShape)
+                    )
+                    Text(
+                        if (expanded) "Collapse" else "Expand",
+                        style = Cue.Caption,
+                        color = Cue.Muted,
+                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp),
+                    )
+                }
+            }
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (!editing && onAdd != null) {
+                    ComposerAction("Add attachment", onClick = onAdd, tonal = true) {
+                        Icon(Glyph.Plus, size = 22.dp)
+                    }
+                }
+                // One field stays mounted as the layout changes, retaining the cursor, selection
+                // and IME.
+                Box(
+                    Modifier.weight(1f)
+                        .padding(horizontal = 12.dp, vertical = if (editing) 8.dp else 0.dp)
+                        .then(if (expanded) Modifier.height(expandedFieldHeight) else Modifier)
+                ) {
+                    BasicTextField(
+                        editor,
+                        { edit(continueMarkdownList(editor, it)) },
+                        Modifier.fillMaxWidth()
+                            .focusRequester(focus)
+                            .onFocusChanged { focused = it.isFocused }
+                            .then(
+                                if (preview) Modifier.height(0.dp).clearAndSetSemantics {}
+                                else if (expanded) Modifier.fillMaxHeight() else Modifier
+                            )
+                            .semantics { if (!preview) contentDescription = placeholder }
+                            .onPreviewKeyEvent { event ->
+                                if (
+                                    preview ||
+                                        event.type != KeyEventType.KeyDown ||
+                                        !event.isCtrlPressed
                                 )
+                                    false
+                                else {
+                                    val format =
+                                        when (event.key) {
+                                            Key.B -> MarkdownFormat.Bold
+                                            Key.I -> MarkdownFormat.Italic
+                                            Key.K -> MarkdownFormat.Link
+                                            else -> null
+                                        }
+                                    if (format != null) applyFormat(format)
+                                    format != null
+                                }
+                            },
+                        readOnly = preview,
+                        textStyle = Cue.ChatText.copy(color = Cue.Ink),
+                        cursorBrush = SolidColor(Cue.Blue),
+                        maxLines = if (expanded) Int.MAX_VALUE else 5,
+                        decorationBox = {
+                            if (value.isEmpty() && !preview)
+                                Text(
+                                    placeholder,
+                                    style = Cue.ChatText,
+                                    color = Cue.Faint,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            it()
+                        },
+                    )
+                    if (preview) {
+                        Box(
+                            Modifier.fillMaxWidth()
+                                .then(
+                                    if (expanded) Modifier.fillMaxHeight()
+                                    else Modifier.heightIn(max = 200.dp)
+                                )
+                                .verticalScroll(rememberScrollState())
+                                .testTag("markdown-preview")
+                        ) {
+                            MarkdownText(value)
+                        }
+                    }
+                }
+                if (!editing) {
+                    ComposerSendAction(busy, send, onMic, onSend, onStop)
+                }
+            }
+            if (editing) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    if (formatting) {
+                        ComposerAction(
+                            "Close formatting",
+                            tonal = true,
+                            onClick = { formatting = false },
+                        ) {
+                            Icon(Glyph.Close, size = 20.dp)
+                        }
+                        Row(
+                            Modifier.weight(1f)
+                                .horizontalScroll(rememberScrollState())
+                                .testTag("markdown-tools")
+                        ) {
+                            MarkdownFormat.entries.forEach { format ->
+                                ComposerAction(
+                                    format.description,
+                                    enabled = !preview,
+                                    onClick = { applyFormat(format) },
+                                ) {
+                                    Text(
+                                        format.label,
+                                        color = Cue.Ink.copy(alpha = if (preview) .35f else 1f),
+                                        fontSize = 16.sp,
+                                        fontWeight =
+                                            if (format == MarkdownFormat.Bold) FontWeight.Bold
+                                            else FontWeight.Medium,
+                                        fontStyle =
+                                            if (format == MarkdownFormat.Italic) FontStyle.Italic
+                                            else FontStyle.Normal,
+                                        textDecoration =
+                                            if (format == MarkdownFormat.Strike)
+                                                TextDecoration.LineThrough
+                                            else TextDecoration.None,
+                                    )
+                                }
                             }
                         }
+                    } else {
+                        if (onAdd != null)
+                            ComposerAction("Add attachment", tonal = true, onClick = onAdd) {
+                                Icon(Glyph.Plus, size = 22.dp)
+                            }
+                        ComposerAction("Markdown formatting", onClick = { formatting = true }) {
+                            Text("Aa", fontSize = 19.sp, color = Cue.Muted)
+                        }
+                        if (onMic != null)
+                            ComposerAction("Voice input", onClick = onMic) {
+                                Icon(Glyph.Mic, tint = Cue.Muted, size = 22.dp)
+                            }
+                        Spacer(Modifier.weight(1f))
                     }
                     TextButton(
                         onClick = {
-                            preview = !preview
-                            if (preview) keyboard?.hide()
+                            if (preview) resumeEditing()
                             else {
-                                focus.requestFocus()
-                                keyboard?.show()
+                                preview = true
+                                keyboard?.hide()
                             }
                         },
                         enabled = value.isNotBlank(),
+                        contentPadding = PaddingValues(horizontal = 8.dp),
                     ) {
-                        Text(if (preview) "Edit" else "Preview", fontSize = 13.sp, color = Cue.Blue)
-                    }
-                }
-                HorizontalDivider(
-                    color = Cue.Ink.copy(alpha = .07f),
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                )
-            }
-        }
-        if (preview) {
-            Box(
-                Modifier.fillMaxWidth()
-                    .heightIn(max = 200.dp)
-                    .verticalScroll(rememberScrollState())
-                    .padding(12.dp)
-                    .testTag("markdown-preview")
-            ) {
-                MarkdownText(value)
-            }
-        }
-        Row(
-            Modifier.fillMaxWidth().heightIn(min = 48.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (onAdd != null)
-                Box(
-                    Modifier.size(36.dp).clickable(role = Role.Button, onClick = onAdd).semantics {
-                        contentDescription = "Add attachment"
-                    },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Glyph.Plus, size = 24.dp)
-                }
-            else Spacer(Modifier.width(10.dp))
-            // Keep the field in composition during preview so selection and IME state survive.
-            Box(Modifier.weight(1f).padding(horizontal = 8.dp)) {
-                BasicTextField(
-                    editor,
-                    { edit(continueMarkdownList(editor, it)) },
-                    Modifier.fillMaxWidth()
-                        .focusRequester(focus)
-                        .then(
-                            if (preview) Modifier.height(0.dp).clearAndSetSemantics {} else Modifier
+                        Text(
+                            if (preview) "Edit" else "Preview",
+                            fontSize = 13.sp,
+                            color = if (value.isNotBlank()) Cue.Blue else Cue.Faint,
                         )
-                        .semantics { if (!preview) contentDescription = placeholder }
-                        .onPreviewKeyEvent { event ->
-                            if (
-                                preview ||
-                                    event.type != KeyEventType.KeyDown ||
-                                    !event.isCtrlPressed
-                            )
-                                false
-                            else {
-                                val format =
-                                    when (event.key) {
-                                        Key.B -> MarkdownFormat.Bold
-                                        Key.I -> MarkdownFormat.Italic
-                                        Key.K -> MarkdownFormat.Link
-                                        else -> null
-                                    }
-                                if (format != null) applyFormat(format)
-                                format != null
-                            }
-                        },
-                    readOnly = preview,
-                    textStyle = Cue.ChatText.copy(color = LocalContentColor.current),
-                    cursorBrush = SolidColor(Cue.Blue),
-                    maxLines = 5,
-                    decorationBox = {
-                        if (value.isEmpty() && !preview)
-                            Text(
-                                placeholder,
-                                style = Cue.ChatText,
-                                color = Cue.Faint,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        it()
-                    },
-                )
-                if (preview) Text("Markdown preview", style = Cue.Caption, color = Cue.Muted)
-            }
-            Box(
-                Modifier.size(36.dp)
-                    .clip(CircleShape)
-                    .background(if (formatting) Cue.Ink.copy(alpha = .06f) else Color.Transparent)
-                    .clickable(role = Role.Button) {
-                        formatting = !formatting
-                        if (!formatting) preview = false
                     }
-                    .semantics {
-                        contentDescription = "Markdown formatting"
-                        selected = formatting
-                    },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("Aa", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Cue.Muted)
+                    ComposerSendAction(busy, send, null, onSend, onStop)
+                }
             }
-            val send = value.isNotBlank() || canSend
-            Box(
-                Modifier.size(40.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (send) Cue.Blue else if (onAdd == null) Cue.Bubble else Color.Transparent
-                    )
-                    .semantics {
-                        contentDescription =
-                            if (busy) "Stop generating"
-                            else if (send || onMic == null) "Send message" else "Voice input"
-                    }
-                    .clickable(enabled = busy || send || onMic != null) {
-                        when {
-                            busy -> onStop()
-                            send -> onSend()
-                            else -> onMic?.invoke()
-                        }
-                    },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    if (busy) Glyph.Stop else if (send || onMic == null) Glyph.Up else Glyph.Mic,
-                    tint =
-                        if (send) Color.White
-                        else if (onMic == null) Cue.Faint else LocalContentColor.current,
-                    size = 22.dp,
-                )
+        }
+    }
+}
+
+/** Shared hit target and press feedback for the compact, editing and formatting rows. */
+@Composable
+private fun ComposerAction(
+    description: String,
+    enabled: Boolean = true,
+    tonal: Boolean = false,
+    onClick: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        Modifier.size(48.dp)
+            .clip(CircleShape)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            Modifier.size(42.dp)
+                .background(
+                    if (tonal) Cue.Ink.copy(alpha = .045f) else Color.Transparent,
+                    CircleShape,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun ComposerSendAction(
+    busy: Boolean,
+    send: Boolean,
+    onMic: (() -> Unit)?,
+    onSend: () -> Unit,
+    onStop: () -> Unit,
+) {
+    val description =
+        if (busy) "Stop generating"
+        else if (send || onMic == null) "Send message" else "Voice input"
+    val active = busy || send
+    Box(
+        Modifier.size(48.dp)
+            .clip(CircleShape)
+            .clickable(enabled = active || onMic != null, role = Role.Button) {
+                when {
+                    busy -> onStop()
+                    send -> onSend()
+                    else -> onMic?.invoke()
+                }
             }
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            Modifier.size(40.dp)
+                .background(if (active) Cue.Blue else Color.Transparent, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                if (busy) Glyph.Stop else if (send || onMic == null) Glyph.Up else Glyph.Mic,
+                tint = if (active) Color.White else if (onMic != null) Cue.Muted else Cue.Faint,
+                size = 22.dp,
+            )
         }
     }
 }

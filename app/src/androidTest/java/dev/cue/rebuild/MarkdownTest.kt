@@ -128,6 +128,133 @@ class MarkdownTest {
     }
 
     @Test
+    fun composerExpandsWithoutLosingSelectionAndCollapsesByDragging() {
+        var draft by mutableStateOf("")
+        compose.setContent {
+            CueTheme {
+                Column(
+                    Modifier.fillMaxSize().safeDrawingPadding().imePadding(),
+                    verticalArrangement = Arrangement.Bottom,
+                ) {
+                    Composer(draft, { draft = it }, "Message", onSend = {}, onAdd = {}, onMic = {})
+                }
+            }
+        }
+        compose.onNodeWithContentDescription("Markdown formatting").assertDoesNotExist()
+        capture("composer-idle")
+        compose.onNodeWithContentDescription("Message").performClick()
+        compose.waitUntil(5000) {
+            compose
+                .onAllNodesWithContentDescription("Markdown formatting")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("Message").performTextInput("hello world")
+        compose.onNodeWithContentDescription("Message").performTextInputSelection(TextRange(6, 11))
+        capture("composer-writing")
+        val shortHeight = compose.onNodeWithTag("composer").fetchSemanticsNode().boundsInRoot.height
+        compose.onNodeWithContentDescription("Expand composer").performClick()
+        compose.onNodeWithContentDescription("Collapse composer").assertIsDisplayed()
+        assertTrue(
+            compose.onNodeWithTag("composer").fetchSemanticsNode().boundsInRoot.height > shortHeight
+        )
+        compose.onNodeWithContentDescription("Markdown formatting").performClick()
+        compose.onNodeWithContentDescription("Bold").performClick()
+        compose.runOnIdle { assertEquals("hello **world**", draft) }
+        capture("composer-expanded")
+        compose.onNodeWithContentDescription("Collapse composer").performTouchInput {
+            swipe(center, center.copy(y = center.y + 140f), 400)
+        }
+        compose.onNodeWithContentDescription("Expand composer").assertIsDisplayed()
+        compose.onNodeWithText("Preview").performClick()
+        compose.onNodeWithContentDescription("Close formatting").performClick()
+        compose.onNodeWithTag("markdown-preview").assertIsDisplayed()
+        compose.onNodeWithText("Edit").performClick()
+        compose.onNodeWithContentDescription("Message").assertTextEquals("hello **world**")
+        compose.onNodeWithContentDescription("Expand composer").performTouchInput {
+            swipe(center, center.copy(y = center.y - 140f), 400)
+        }
+        compose.onNodeWithContentDescription("Collapse composer").assertIsDisplayed()
+        compose.runOnIdle { compose.activity.onBackPressedDispatcher.onBackPressed() }
+        compose.onNodeWithContentDescription("Expand composer").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Message").assertTextEquals("hello **world**")
+    }
+
+    @Test
+    fun composerKeepsAttachmentVoiceAndStopActionsAvailable() {
+        var attachments = 0
+        var voice = 0
+        var stopped = 0
+        var sent = 0
+        var draft by mutableStateOf("")
+        var busy by mutableStateOf(false)
+        var canSend by mutableStateOf(false)
+        compose.setContent {
+            CueTheme {
+                Column(
+                    Modifier.fillMaxSize().safeDrawingPadding().imePadding(),
+                    verticalArrangement = Arrangement.Bottom,
+                ) {
+                    Composer(
+                        draft,
+                        { draft = it },
+                        "Message",
+                        busy,
+                        onSend = { sent++ },
+                        onStop = { stopped++ },
+                        onAdd = { attachments++ },
+                        onMic = { voice++ },
+                        canSend = canSend,
+                    )
+                }
+            }
+        }
+        compose.onNodeWithContentDescription("Add attachment").performClick()
+        compose.onNodeWithContentDescription("Voice input").performClick()
+        compose.runOnIdle { canSend = true }
+        compose.onNodeWithContentDescription("Send message").performClick()
+        compose.onNodeWithContentDescription("Message").performTextInput("A draft")
+        compose.onNodeWithContentDescription("Add attachment").performClick()
+        compose.onNodeWithContentDescription("Voice input").performClick()
+        compose.runOnIdle { busy = true }
+        compose.onNodeWithContentDescription("Markdown formatting").performClick()
+        compose.onNodeWithContentDescription("Stop generating").performClick()
+        compose.runOnIdle {
+            assertEquals(2, attachments)
+            assertEquals(2, voice)
+            assertEquals(1, stopped)
+            assertEquals(1, sent)
+        }
+    }
+
+    @Test
+    fun longDraftKeepsControlsVisibleInTheChatAndDarkTheme() {
+        val state = CueState(compose.activity.application, "composer-test-${System.nanoTime()}")
+        state.open(Screen.Chat, state.agent().id)
+        compose.setContent { CueTheme(dark = state.appearance == "Dark") { CueApp(state) } }
+        val field = compose.onNode(hasSetTextAction())
+        val draft = "## A little room to write\n\n" + (1..20).joinToString("\n") { "- Idea $it" }
+        field.performTextInput(draft)
+        compose.onNodeWithContentDescription("Expand composer").performClick()
+        compose.onNodeWithContentDescription("Send message").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Add attachment").assertIsDisplayed()
+        capture("composer-chat-expanded")
+        compose.runOnIdle { state.changeAppearance("Dark") }
+        capture("composer-chat-expanded-dark")
+        compose.onNodeWithText("Preview").performClick()
+        compose.onNodeWithTag("markdown-preview").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Send message").assertIsDisplayed()
+        compose.onNodeWithText("Edit").performClick()
+        compose.onNodeWithContentDescription("Collapse composer").performClick()
+        field.assertTextEquals(draft)
+        compose.onNodeWithContentDescription("Send message").assertIsDisplayed()
+        compose.runOnIdle {
+            assertEquals(Screen.Chat, state.route.screen)
+            assertEquals(draft, state.agent().draft)
+        }
+    }
+
+    @Test
     fun markdownFitsBubblesInBothThemes() {
         var dark by mutableStateOf(false)
         val sample =
