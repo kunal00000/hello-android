@@ -102,6 +102,62 @@ class ChatRecoveryTest {
     }
 
     @Test
+    fun expiredApprovalClearsTheStaleQuestionWithoutRetryingIt() {
+        val listener = ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))
+        val url = "http://127.0.0.1:${listener.localPort}"
+        val worker =
+            thread(isDaemon = true) {
+                listener.use { server ->
+                    server.accept().use { socket ->
+                        socket.getInputStream().bufferedReader().readLine()
+                        val body =
+                            """{"code":"input_expired","error":"That approval is no longer active. Send a new message to request it again."}"""
+                        socket
+                            .getOutputStream()
+                            .write(
+                                ("HTTP/1.1 409 Conflict\r\nContent-Type: application/json\r\nContent-Length: ${body.toByteArray().size}\r\nConnection: close\r\n\r\n" +
+                                        body)
+                                    .toByteArray()
+                            )
+                        socket.getOutputStream().flush()
+                    }
+                }
+            }
+        try {
+            val state = launch(url)
+            compose.runOnIdle {
+                state.update(
+                    state
+                        .agent()
+                        .copy(
+                            sessionId = "old-session",
+                            pendingInputs =
+                                listOf(
+                                    InputPrompt(
+                                        "expired",
+                                        "Approve?",
+                                        false,
+                                        listOf(InputChoice("approve", "Approve")),
+                                    )
+                                ),
+                        )
+                )
+                assertTrue(state.send(state.agent().id, "Approve", optionId = "approve"))
+            }
+            compose.waitUntil(10000) { state.busy.isEmpty() }
+            compose.runOnIdle {
+                assertTrue(state.agent().pendingInputs.isEmpty())
+                assertEquals("old-session", state.agent().sessionId)
+                assertEquals(1, state.agent().messages.count { it.user })
+                assertTrue(state.agent().messages.last().failureReason.contains("no longer active"))
+            }
+        } finally {
+            listener.close()
+            worker.join(1000)
+        }
+    }
+
+    @Test
     fun draftsAppearanceAndPendingQuestionsSurviveReload() {
         val app = compose.activity.application
         val store = "cue-persist-${System.nanoTime()}"

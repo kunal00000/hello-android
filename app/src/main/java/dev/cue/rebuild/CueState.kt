@@ -238,24 +238,27 @@ constructor(
         connectionError = null
     }
 
-    private class BackendFailure(message: String) : java.io.IOException(message)
+    private class BackendFailure(message: String, val code: String? = null) :
+        java.io.IOException(message)
 
     private fun checkResponse(response: Response) {
         if (response.isSuccessful) return
+        val detail =
+            if (response.code == 409)
+                runCatching { JSONObject(response.body?.string() ?: "{}") }.getOrNull()
+            else null
         val message =
             when (response.code) {
                 401,
                 403 -> "Access token not accepted. Reconnect your backend in Settings."
                 429 -> "Usage limit reached. Please try again later."
                 409 ->
-                    runCatching { JSONObject(response.body?.string() ?: "{}").optString("error") }
-                        .getOrNull()
-                        ?.takeIf { it.isNotBlank() }
+                    detail?.optString("error")?.takeIf { it.isNotBlank() }
                         ?: "An agent is already working. Stop it or wait for it to finish."
                 413 -> "This message is too large. Try fewer attachments or shorter instructions."
                 else -> "The backend is unavailable. Please try again."
             }
-        throw BackendFailure(message)
+        throw BackendFailure(message, detail?.optString("code"))
     }
 
     private val preferences = application.getSharedPreferences(storageName, 0)
@@ -683,14 +686,17 @@ constructor(
                     if (deviceResult)
                         error = "Device result could not be delivered. Tap Retry in the chat."
                     val a = agent(agentId)
+                    val expiredInput = e is BackendFailure && e.code == "input_expired"
+                    if (expiredInput && pending != null) deviceAccess.clearResult(pending.id)
                     update(
                         a.copy(
+                            pendingInputs = if (expiredInput) emptyList() else a.pendingInputs,
                             messages =
                                 a.messages.map {
                                     if (it.id == message.id)
                                         it.copy(failed = true, failureReason = reason)
                                     else it
-                                }
+                                },
                         )
                     )
                 } finally {
