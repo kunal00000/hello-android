@@ -1,27 +1,30 @@
 package dev.cue.rebuild
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import kotlin.math.abs
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 
 private class NavigationExclusions {
     var container: LayoutCoordinates? = null
@@ -35,8 +38,9 @@ private class NavigationExclusions {
 }
 
 private val LocalNavigationExclusions = staticCompositionLocalOf<NavigationExclusions?> { null }
+internal val LocalNavigationActive = staticCompositionLocalOf { true }
 
-/** Reserve a component's actual bounds without consuming its taps, long presses or drags. */
+/** Reserve a component's bounds without consuming its taps, long presses or drags. */
 @Composable
 fun Modifier.excludeNavigationGestures(): Modifier {
     val exclusions = LocalNavigationExclusions.current ?: return this
@@ -45,100 +49,181 @@ fun Modifier.excludeNavigationGestures(): Modifier {
     return onGloballyPositioned { exclusions.regions[key] = it }
 }
 
-/** Full-screen horizontal navigation; child scrollers and explicitly reserved regions win. */
+/** Adjacent pages follow the finger; the route changes only after the swipe settles. */
 @Composable
 fun SwipeNavigation(
-    gestureKey: Any,
-    onBack: (() -> Unit)?,
-    onForward: (() -> Unit)?,
+    route: Route,
+    left: Route?,
+    right: Route?,
+    direction: Int,
+    onNavigate: (Route) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    content: @Composable BoxScope.() -> Unit,
+    content: @Composable (Route) -> Unit,
 ) {
-    val back by rememberUpdatedState(onBack)
-    val forward by rememberUpdatedState(onForward)
+    val navigate by rememberUpdatedState(onNavigate)
+    val latestRoute by rememberUpdatedState(route)
+    val latestContent by rememberUpdatedState(content)
     val exclusions = remember { NavigationExclusions() }
-    var progress by remember(gestureKey, enabled) { mutableFloatStateOf(0f) }
-    var goingForward by remember { mutableStateOf(false) }
-    val hintAlpha by
-        animateFloatAsState(
-            targetValue = progress,
-            animationSpec = if (progress == 0f) tween(Cue.FeedbackMs) else snap(),
-            label = "navigation hint",
-        )
-    CompositionLocalProvider(LocalNavigationExclusions provides exclusions) {
-        Box(
-            modifier
-                .onGloballyPositioned { exclusions.container = it }
-                .pointerInput(gestureKey, enabled, onBack != null, onForward != null) {
-                    if (!enabled) return@pointerInput
-                    val threshold = (size.width * .22f).coerceIn(64.dp.toPx(), 96.dp.toPx())
-                    awaitEachGesture {
-                        val down =
-                            awaitFirstDown(
-                                requireUnconsumed = false,
-                                pass = PointerEventPass.Initial,
-                            )
-                        if (exclusions.contains(down.position)) return@awaitEachGesture
-                        var direction = 0f
-                        try {
-                            while (true) {
-                                // Children get first refusal: paging, scrolling and selection keep
-                                // ownership.
-                                val event = awaitPointerEvent(PointerEventPass.Main)
-                                if (event.changes.count { it.pressed } > 1) break
-                                val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                                // Clickables consume the initial down; only movement/up consumption
-                                // cancels us.
-                                if (change.uptimeMillis == down.uptimeMillis) continue
-                                if (change.isConsumed) break
-                                val delta = change.position - down.position
-                                if (direction == 0f) {
-                                    if (
-                                        abs(delta.y) > viewConfiguration.touchSlop &&
-                                            abs(delta.y) >= abs(delta.x)
-                                    )
-                                        break
-                                    if (abs(delta.x) > viewConfiguration.touchSlop) {
-                                        if (abs(delta.x) < abs(delta.y) * 1.5f) break
-                                        direction = if (delta.x > 0) 1f else -1f
-                                        if (
-                                            direction > 0 && back == null ||
-                                                direction < 0 && forward == null
-                                        )
-                                            break
-                                        goingForward = direction < 0
-                                    }
-                                }
-                                if (direction != 0f) {
-                                    change.consume()
-                                    progress = (delta.x * direction / threshold).coerceIn(0f, 1f)
-                                }
-                                if (!change.pressed) {
-                                    if (direction != 0f && delta.x * direction >= threshold) {
-                                        if (direction > 0) back?.invoke() else forward?.invoke()
-                                    }
+    val savedPages = rememberSaveableStateHolder()
+    val scope = rememberCoroutineScope()
+    var displayed by remember { mutableStateOf(route) }
+    var neighbor by remember { mutableStateOf<Route?>(null) }
+    var offset by remember { mutableFloatStateOf(0f) }
+    var side by remember { mutableIntStateOf(0) }
+    var width by remember { mutableIntStateOf(0) }
+    var settling by remember { mutableStateOf(false) }
+    var motion by remember { mutableStateOf<Job?>(null) }
+
+    // Button and system-back navigation use the same geometry as dragging.
+    LaunchedEffect(route, width) {
+        if (route == displayed || width == 0) return@LaunchedEffect
+        motion?.cancelAndJoin()
+        settling = true
+        neighbor = route
+        side = direction
+        offset = 0f
+        try {
+            animate(
+                0f,
+                direction * width.toFloat(),
+                animationSpec = tween(Cue.NavigationMs, easing = Cue.Ease),
+            ) { value, _ ->
+                offset = value
+            }
+            displayed = route
+        } finally {
+            neighbor = null
+            offset = 0f
+            settling = false
+        }
+    }
+    DisposableEffect(Unit) { onDispose { motion?.cancel() } }
+
+    Box(
+        modifier
+            .clipToBounds()
+            .onSizeChanged { width = it.width }
+            .onGloballyPositioned { exclusions.container = it }
+            .pointerInput(route, displayed, left, right, enabled) {
+                if (!enabled) return@pointerInput
+                val minFlingDistance = 32.dp.toPx()
+                val minFlingVelocity = 650.dp.toPx()
+                awaitEachGesture {
+                    val down =
+                        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    if (settling || exclusions.contains(down.position)) return@awaitEachGesture
+                    val velocity =
+                        VelocityTracker().apply { addPosition(down.uptimeMillis, down.position) }
+                    var dragSide = 0
+                    var destination: Route? = null
+                    var released = false
+                    var commit = false
+                    try {
+                        while (true) {
+                            // Child scrollers get first refusal. Bubble and composer bounds are
+                            // excluded above.
+                            val event = awaitPointerEvent(PointerEventPass.Main)
+                            if (event.changes.count { it.pressed } > 1) break
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            if (change.uptimeMillis == down.uptimeMillis) continue
+                            if (change.isConsumed) break
+                            velocity.addPosition(change.uptimeMillis, change.position)
+                            val delta = change.position - down.position
+                            if (dragSide == 0) {
+                                if (
+                                    abs(delta.y) > viewConfiguration.touchSlop &&
+                                        abs(delta.y) >= abs(delta.x)
+                                )
                                     break
+                                if (abs(delta.x) > viewConfiguration.touchSlop) {
+                                    if (abs(delta.x) < abs(delta.y) * 1.5f) break
+                                    dragSide = if (delta.x > 0) 1 else -1
+                                    destination = if (dragSide > 0) left else right
+                                    if (destination == null) break
+                                    side = dragSide
+                                    neighbor = destination
                                 }
                             }
-                        } finally {
-                            progress = 0f
+                            if (destination != null) {
+                                change.consume()
+                                offset =
+                                    (delta.x * dragSide).coerceIn(0f, size.width.toFloat()) *
+                                        dragSide
+                            }
+                            if (!change.pressed) {
+                                released = true
+                                val speed = velocity.calculateVelocity().x * dragSide
+                                val distance = offset * dragSide
+                                // A deliberate reverse flick cancels even after crossing the
+                                // distance threshold.
+                                commit =
+                                    destination != null &&
+                                        speed > -minFlingVelocity &&
+                                        (distance > size.width * .3f ||
+                                            distance > minFlingDistance && speed > minFlingVelocity)
+                                break
+                            }
+                        }
+                    } finally {
+                        if (destination != null && latestRoute == displayed) {
+                            val target = destination
+                            val finish = released && commit
+                            settling = true
+                            motion =
+                                scope.launch {
+                                    try {
+                                        animate(
+                                            offset,
+                                            if (finish) dragSide * width.toFloat() else 0f,
+                                            animationSpec =
+                                                tween(Cue.NavigationMs, easing = Cue.Ease),
+                                        ) { value, _ ->
+                                            offset = value
+                                        }
+                                        if (finish) {
+                                            displayed = target
+                                            navigate(target)
+                                        }
+                                    } finally {
+                                        offset = 0f
+                                        neighbor = null
+                                        settling = false
+                                    }
+                                }
                         }
                     }
                 }
-        ) {
-            content()
-            if (hintAlpha > 0f) {
+            }
+    ) {
+        for (page in listOfNotNull(displayed, neighbor).distinct()) {
+            key(page) {
+                // Keep saveable keys stable as this page moves between preview and foreground.
+                val pageContent =
+                    remember(page) {
+                        movableContentOf {
+                            savedPages.SaveableStateProvider(
+                                "${page.screen}:${page.agentId}:${page.integrationId}"
+                            ) {
+                                latestContent(page)
+                            }
+                        }
+                    }
+                val active = page == displayed
                 Box(
-                    Modifier.align(if (goingForward) Alignment.CenterEnd else Alignment.CenterStart)
-                        .padding(horizontal = 8.dp)
-                        .size(40.dp)
-                        .alpha(hintAlpha)
-                        .shadow(6.dp, CircleShape)
-                        .background(MaterialTheme.colorScheme.surface, CircleShape),
-                    contentAlignment = Alignment.Center,
+                    Modifier.fillMaxSize()
+                        .graphicsLayer {
+                            translationX = offset + if (active) 0f else -side * width.toFloat()
+                        }
+                        .testTag("page-${page.screen}")
+                        .then(if (active) Modifier else Modifier.clearAndSetSemantics {})
                 ) {
-                    Icon(if (goingForward) Glyph.Next else Glyph.Back)
+                    CompositionLocalProvider(
+                        LocalNavigationExclusions provides if (active) exclusions else null,
+                        LocalNavigationActive provides (active && !settling),
+                    ) {
+                        pageContent()
+                    }
                 }
             }
         }

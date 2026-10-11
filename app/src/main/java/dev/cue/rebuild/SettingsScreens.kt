@@ -6,8 +6,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.pager.*
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,7 +14,6 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.*
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
@@ -27,9 +24,10 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SettingsScreen(state: CueState, onPhone: () -> Unit) {
     var appearance by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { state.checkBackend() }
+    val active = LocalNavigationActive.current
+    LaunchedEffect(active) { if (active) state.checkBackend() }
     Column(Modifier.fillMaxSize()) {
-        Header("Settings", state::back)
+        Header("Settings", state::back, backGlyph = Glyph.Next)
         Column(
             Modifier.verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(32.dp),
@@ -73,6 +71,12 @@ fun SettingsScreen(state: CueState, onPhone: () -> Unit) {
                             onClick = state::checkBackend,
                         )
                     }
+                    TextButton(onClick = { state.open(Screen.Backend) }) {
+                        Text(
+                            if (state.hasBackendCredential) "Manage connection"
+                            else "Connect backend"
+                        )
+                    }
                     HorizontalDivider(color = Cue.Bubble)
                     val agentCount = state.agents.count { !it.group }
                     val messageCount =
@@ -89,12 +93,7 @@ fun SettingsScreen(state: CueState, onPhone: () -> Unit) {
                 }
             }
             Group {
-                SettingRow(
-                    "Apps",
-                    Glyph.Box,
-                    "Not connected",
-                    onClick = { state.open(Screen.Apps) },
-                )
+                SettingRow("Integrations", Glyph.Box, onClick = { state.open(Screen.Integrations) })
                 SettingRow("Skills", Glyph.Skill, onClick = { state.open(Screen.Skills) })
                 SettingRow(
                     "Email",
@@ -138,7 +137,7 @@ fun SettingsScreen(state: CueState, onPhone: () -> Unit) {
                     Glyph.Help,
                     onClick = {
                         state.error =
-                            "Cue Replica runs locally with your superintelligence backend. Connect the phone over USB and run scripts/run-backend.sh."
+                            "Connect your private backend from Agent connection using your access token."
                     },
                 )
                 SettingRow("Version", Glyph.Square, "v${BuildConfig.VERSION_NAME}", divider = false)
@@ -169,200 +168,6 @@ fun SettingsScreen(state: CueState, onPhone: () -> Unit) {
             },
             confirmButton = { TextButton(onClick = { appearance = false }) { Text("Cancel") } },
         )
-}
-
-private data class AppEntry(
-    val name: String,
-    val detail: String,
-    val category: String,
-    val color: Color,
-)
-
-private val apps =
-    listOf(
-        AppEntry(
-            "MyFitnessPal",
-            "Explore your MyFitnessPal nutrition data",
-            "Health",
-            Color(0xFF006BFF),
-        ),
-        AppEntry(
-            "Withings",
-            "Explore your Withings body, activity, and sleep",
-            "Health",
-            Color.Black,
-        ),
-        AppEntry(
-            "Polar",
-            "Explore your Polar training, activity, and recovery",
-            "Health",
-            Color(0xFFEC1535),
-        ),
-        AppEntry(
-            "TrainingPeaks",
-            "Explore your TrainingPeaks workouts",
-            "Health",
-            Color(0xFF3A76FF),
-        ),
-        AppEntry("Plaid", "Connect Plaid to securely read transactions", "Finance", Color.Black),
-        AppEntry(
-            "Clue",
-            "Explore your Clue cycle and reproductive health",
-            "Health",
-            Color(0xFFFF4850),
-        ),
-        AppEntry(
-            "Cronometer",
-            "Explore your Cronometer nutrition and activity",
-            "Health",
-            Color(0xFFFF7045),
-        ),
-        AppEntry(
-            "Fitbit",
-            "Explore your Fitbit activity, sleep, and health",
-            "Health",
-            Color(0xFF00AABC),
-        ),
-        AppEntry("Oura", "Explore your sleep and readiness", "Health", Color.Black),
-        AppEntry("Gmail", "Read and manage your email", "Productivity", Color(0xFFEA4335)),
-        AppEntry(
-            "Google Calendar",
-            "Manage events and your schedule",
-            "Productivity",
-            Color(0xFF4285F4),
-        ),
-        AppEntry(
-            "Google Drive",
-            "Find and work with your files",
-            "Productivity",
-            Color(0xFF0F9D58),
-        ),
-        AppEntry("GitHub", "Work with repositories and issues", "Productivity", Color.Black),
-        AppEntry(
-            "Slack",
-            "Search conversations in your workspace",
-            "Productivity",
-            Color(0xFF611F69),
-        ),
-    )
-
-@Composable
-fun AppsScreen(state: CueState) {
-    var query by remember { mutableStateOf("") }
-    val categories = listOf("All", "Finance", "Health", "Travel", "Productivity")
-    val pager = rememberPagerState(pageCount = { categories.size })
-    val scope = rememberCoroutineScope()
-    val tabs = rememberLazyListState()
-    LaunchedEffect(pager.currentPage) { tabs.animateScrollToItem(pager.currentPage) }
-    var selected by remember { mutableStateOf<AppEntry?>(null) }
-    Column {
-        Header("Apps", state::back)
-        SearchField(query, { query = it }, "Search apps", Modifier.padding(16.dp, 8.dp))
-        LazyRow(
-            state = tabs,
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            itemsIndexed(categories) { index, name ->
-                Text(
-                    name,
-                    Modifier.clip(CircleShape)
-                        .background(
-                            if (pager.currentPage == index) Cue.Bubble else Color.Transparent
-                        )
-                        .selectable(
-                            selected = pager.currentPage == index,
-                            role = Role.Tab,
-                            onClick = { scope.launch { pager.animateScrollToPage(index) } },
-                        )
-                        .padding(horizontal = 22.dp, vertical = 10.dp),
-                    color = if (pager.currentPage == index) Cue.Ink else Cue.Muted,
-                    fontSize = 14.sp,
-                )
-            }
-        }
-        HorizontalPager(
-            state = pager,
-            modifier = Modifier.fillMaxWidth().weight(1f).testTag("app-categories"),
-            verticalAlignment = Alignment.Top,
-        ) { page ->
-            val category = categories[page]
-            val results =
-                apps.filter {
-                    (category == "All" || it.category == category) && it.name.contains(query, true)
-                }
-            if (results.isEmpty())
-                EmptyState(Glyph.Search, "No apps found", Modifier.padding(top = 100.dp))
-            else
-                LazyColumn(
-                    Modifier.padding(horizontal = 16.dp)
-                        .clip(RoundedCornerShape(26.dp))
-                        .background(MaterialTheme.colorScheme.surface)
-                ) {
-                    items(results, key = { it.name }) { app ->
-                        Row(
-                            Modifier.fillMaxWidth().clickable { selected = app }.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Box(
-                                Modifier.size(40.dp)
-                                    .border(1.dp, Cue.Bubble, RoundedCornerShape(13.dp)),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                val asset =
-                                    when (app.name) {
-                                        "Gmail" -> "gmail_icon"
-                                        "Google Calendar" -> "google_calendar_icon"
-                                        "GitHub" -> "github_icon"
-                                        else -> null
-                                    }
-                                if (asset != null) Asset(asset, Modifier.size(25.dp))
-                                else
-                                    Box(
-                                        Modifier.size(25.dp)
-                                            .background(app.color, RoundedCornerShape(8.dp)),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Text(
-                                            app.name.take(1),
-                                            color = Color.White,
-                                            fontSize = 19.sp,
-                                            fontWeight = FontWeight.Bold,
-                                        )
-                                    }
-                            }
-                            Column(Modifier.weight(1f).padding(start = 12.dp, end = 14.dp)) {
-                                Text(app.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                                Spacer(Modifier.height(3.dp))
-                                Text(
-                                    app.detail,
-                                    color = Cue.Muted,
-                                    fontSize = 14.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                            Text("Not connected", color = Cue.Muted, fontSize = 12.sp)
-                        }
-                        HorizontalDivider(
-                            Modifier.padding(start = 68.dp, end = 16.dp),
-                            color = Cue.Bubble,
-                            thickness = .5.dp,
-                        )
-                    }
-                }
-        }
-    }
-    selected?.let { app ->
-        AlertDialog(
-            onDismissRequest = { selected = null },
-            title = { Text(app.name) },
-            text = {
-                Text("${app.detail}. This connection is not available from the local backend yet.")
-            },
-            confirmButton = { TextButton(onClick = { selected = null }) { Text("Done") } },
-        )
-    }
 }
 
 @Composable

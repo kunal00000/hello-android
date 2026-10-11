@@ -1,11 +1,8 @@
 package dev.cue.rebuild
 
-import android.Manifest
 import android.content.Context
 import android.graphics.Bitmap
-import android.location.LocationManager
 import android.net.Uri
-import android.provider.ContactsContract
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,7 +54,6 @@ fun importAttachment(context: Context, uri: Uri): Attachment {
 fun rememberAttachmentActions(
     context: Context,
     onAttachment: (Attachment) -> Unit,
-    onText: (String) -> Unit,
     onError: (String) -> Unit,
 ): (String) -> Unit {
     val scope = rememberCoroutineScope()
@@ -86,54 +82,12 @@ fun rememberAttachmentActions(
                     onAttachment(attachment)
                 }
         }
-    val contact =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickContact()) { uri ->
-            if (uri != null) {
-                val name =
-                    context.contentResolver
-                        .query(
-                            uri,
-                            arrayOf(ContactsContract.Contacts.DISPLAY_NAME),
-                            null,
-                            null,
-                            null,
-                        )
-                        ?.use { if (it.moveToFirst()) it.getString(0) else null }
-                if (name != null) onText(name) else onError("Could not read this contact.")
-            }
-        }
-    val location =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted)
-                try {
-                    val manager =
-                        context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-                    val last =
-                        manager
-                            .getProviders(true)
-                            .mapNotNull { provider ->
-                                runCatching { manager.getLastKnownLocation(provider) }.getOrNull()
-                            }
-                            .maxByOrNull { it.time }
-                    if (last == null)
-                        onError("A location is not available yet. Enable location and try again.")
-                    else
-                        onText(
-                            "My location: https://maps.google.com/?q=${last.latitude},${last.longitude}"
-                        )
-                } catch (e: SecurityException) {
-                    onError("Location permission is required.")
-                }
-            else onError("Location permission was not granted.")
-        }
     return { action ->
         runCatching {
                 when (action) {
                     "Camera" -> camera.launch(null)
                     "Photos" -> pick.launch("image/*")
                     "Files" -> pick.launch("*/*")
-                    "Contacts" -> contact.launch(null)
-                    "Location" -> location.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
                 }
             }
             .onFailure { onError("$action is not available on this device.") }

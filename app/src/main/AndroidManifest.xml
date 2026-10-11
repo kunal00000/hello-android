@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.READ_CALENDAR"/>
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+    <uses-permission android:name="android.permission.READ_SMS"/>
+    <uses-permission android:name="android.permission.READ_CALL_LOG"/>
+    <uses-permission android:name="android.permission.health.READ_STEPS"/>
+    <uses-feature android:name="android.hardware.telephony" android:required="false"/>
     <queries>
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE"/>
@@ -11,10 +17,26 @@
         </intent>
     </queries>
     <application android:allowBackup="false" android:networkSecurityConfig="@xml/network_security_config" android:icon="@drawable/cue_gray_gear" android:label="@string/app_name" android:supportsRtl="true" android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <activity android:name=".HealthPrivacyActivity" android:exported="true"/>
+        <activity-alias android:name=".HealthPermissionUsage" android:exported="true" android:targetActivity=".HealthPrivacyActivity" android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/>
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
+            </intent-filter>
+        </activity-alias>
+        <service android:name=".CueNotificationListener" android:label="Cue notification access" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" android:exported="true">
+            <intent-filter><action android:name="android.service.notification.NotificationListenerService"/></intent-filter>
+        </service>
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files" android:exported="false" android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths"/>
         </provider>
-        <activity android:name=".MainActivity" android:exported="true" android:windowSoftInputMode="adjustResize">
+        <activity android:name=".MainActivity" android:launchMode="singleTop" android:exported="true" android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="cue" android:host="integrations"/>
+            </intent-filter>
         </activity>
         <activity-alias android:name=".launcher.GrayGear" android:targetActivity=".MainActivity" android:enabled="true" android:exported="true" android:icon="@drawable/cue_gray_gear" android:label="@string/app_name">
             <intent-filter>

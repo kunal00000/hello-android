@@ -1,0 +1,757 @@
+{
+  "source": "https://eve.dev/integrations",
+  "items": [
+    {
+      "id": "eve",
+      "name": "Web Chat",
+      "category": "channels",
+      "description": "Embed a first-party web chat UI backed by your agent.",
+      "url": "https://eve.dev/integrations/eve",
+      "icon": "eve"
+    },
+    {
+      "id": "slack",
+      "name": "Slack",
+      "category": "channels",
+      "description": "Mention your agent in channels and DMs, with Connect-managed auth.",
+      "url": "https://eve.dev/integrations/slack",
+      "icon": "slack"
+    },
+    {
+      "id": "discord",
+      "name": "Discord",
+      "category": "channels",
+      "description": "Run your agent as a Discord bot across servers and threads.",
+      "url": "https://eve.dev/integrations/discord",
+      "icon": "discord"
+    },
+    {
+      "id": "teams",
+      "name": "Microsoft Teams",
+      "category": "channels",
+      "description": "Bring your agent into Teams chats and channels.",
+      "url": "https://eve.dev/integrations/teams",
+      "icon": "teams"
+    },
+    {
+      "id": "telegram",
+      "name": "Telegram",
+      "category": "channels",
+      "description": "Connect your agent to a Telegram bot for 1:1 and group chats.",
+      "url": "https://eve.dev/integrations/telegram",
+      "icon": "telegram"
+    },
+    {
+      "id": "twilio",
+      "name": "Twilio",
+      "category": "channels",
+      "description": "Put your agent on a phone number: SMS and speech-transcribed calls.",
+      "url": "https://eve.dev/integrations/twilio",
+      "icon": "twilio"
+    },
+    {
+      "id": "blooio",
+      "name": "Blooio",
+      "category": "channels",
+      "description": "Send and receive iMessage, RCS, and SMS through Blooio.",
+      "url": "https://eve.dev/integrations/blooio",
+      "icon": "blooio"
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "category": "channels",
+      "description": "Drive your agent from issues, pull requests, and comments, with guided Connect setup.",
+      "url": "https://eve.dev/integrations/github",
+      "icon": "github"
+    },
+    {
+      "id": "linear-agent",
+      "name": "Linear Agent",
+      "category": "channels",
+      "description": "Delegate Linear issues and comments through Agent Sessions, with guided Connect setup.",
+      "url": "https://eve.dev/integrations/linear-agent",
+      "icon": "linear-agent"
+    },
+    {
+      "id": "chat-sdk-gchat",
+      "name": "Google Chat",
+      "category": "channels",
+      "description": "Google Chat spaces and DMs via the Chat SDK.",
+      "url": "https://eve.dev/integrations/chat-sdk-gchat",
+      "icon": "chat-sdk-gchat"
+    },
+    {
+      "id": "chat-sdk-whatsapp",
+      "name": "WhatsApp",
+      "category": "channels",
+      "description": "Customer messaging through WhatsApp Business Cloud via the Chat SDK.",
+      "url": "https://eve.dev/integrations/chat-sdk-whatsapp",
+      "icon": "chat-sdk-whatsapp"
+    },
+    {
+      "id": "chat-sdk-x",
+      "name": "X",
+      "category": "channels",
+      "description": "Public mentions and DMs on X via the Chat SDK.",
+      "url": "https://eve.dev/integrations/chat-sdk-x",
+      "icon": "chat-sdk-x"
+    },
+    {
+      "id": "chat-sdk-messenger",
+      "name": "Messenger",
+      "category": "channels",
+      "description": "Facebook Messenger bots with templates, buttons, and reactions via the Chat SDK.",
+      "url": "https://eve.dev/integrations/chat-sdk-messenger",
+      "icon": "chat-sdk-messenger"
+    },
+    {
+      "id": "chat-sdk-zernio",
+      "name": "Zernio",
+      "category": "channels",
+      "description": "Reach seven social and messaging platforms through one Zernio integration.",
+      "url": "https://eve.dev/integrations/chat-sdk-zernio",
+      "icon": "chat-sdk-zernio"
+    },
+    {
+      "id": "chat-sdk-velt",
+      "name": "Velt",
+      "category": "channels",
+      "description": "Add agents to anchored comments across documents, canvases, PDFs, and video.",
+      "url": "https://eve.dev/integrations/chat-sdk-velt",
+      "icon": "chat-sdk-velt"
+    },
+    {
+      "id": "chat-sdk-sendblue",
+      "name": "Sendblue",
+      "category": "channels",
+      "description": "Send and receive iMessage, SMS, and RCS through Sendblue.",
+      "url": "https://eve.dev/integrations/chat-sdk-sendblue",
+      "icon": "chat-sdk-sendblue"
+    },
+    {
+      "id": "chat-sdk-novu",
+      "name": "Novu",
+      "category": "channels",
+      "description": "Reach Slack, Teams, WhatsApp, Telegram, and email through Novu.",
+      "url": "https://eve.dev/integrations/chat-sdk-novu",
+      "icon": "chat-sdk-novu"
+    },
+    {
+      "id": "chat-sdk-liveblocks",
+      "name": "Liveblocks",
+      "category": "channels",
+      "description": "Bring your agent into Liveblocks comment threads, mentions, and reactions.",
+      "url": "https://eve.dev/integrations/chat-sdk-liveblocks",
+      "icon": "chat-sdk-liveblocks"
+    },
+    {
+      "id": "linq",
+      "name": "Linq",
+      "category": "channels",
+      "description": "iMessage and SMS conversations through Linq, with guided Connect or portable setup.",
+      "url": "https://eve.dev/integrations/linq",
+      "icon": "linq"
+    },
+    {
+      "id": "chat-sdk-kapso",
+      "name": "Kapso",
+      "category": "channels",
+      "description": "Managed WhatsApp conversations, media, buttons, and history through Kapso.",
+      "url": "https://eve.dev/integrations/chat-sdk-kapso",
+      "icon": "chat-sdk-kapso"
+    },
+    {
+      "id": "photon",
+      "name": "Photon",
+      "category": "channels",
+      "description": "iMessage through Photon, with guided project and phone setup.",
+      "url": "https://eve.dev/integrations/photon",
+      "icon": "photon"
+    },
+    {
+      "id": "chat-sdk-dial",
+      "name": "Dial",
+      "category": "channels",
+      "description": "Give your agent a phone number for SMS, MMS, iMessage, and voice transcripts.",
+      "url": "https://eve.dev/integrations/chat-sdk-dial",
+      "icon": "chat-sdk-dial"
+    },
+    {
+      "id": "chat-sdk-agentphone",
+      "name": "AgentPhone",
+      "category": "channels",
+      "description": "SMS, MMS, iMessage, and voice conversations through AgentPhone.",
+      "url": "https://eve.dev/integrations/chat-sdk-agentphone",
+      "icon": "chat-sdk-agentphone"
+    },
+    {
+      "id": "chat-sdk-lark",
+      "name": "Lark / Feishu",
+      "category": "channels",
+      "description": "Lark and Feishu chats with native card streaming via the Chat SDK.",
+      "url": "https://eve.dev/integrations/chat-sdk-lark",
+      "icon": "chat-sdk-lark"
+    },
+    {
+      "id": "chat-sdk-beeper",
+      "name": "Beeper",
+      "category": "channels",
+      "description": "Matrix rooms and bridged messaging networks through Beeper.",
+      "url": "https://eve.dev/integrations/chat-sdk-beeper",
+      "icon": "chat-sdk-beeper"
+    },
+    {
+      "id": "chat-sdk-resend",
+      "name": "Resend",
+      "category": "channels",
+      "description": "Send and receive threaded email through Resend via the Chat SDK.",
+      "url": "https://eve.dev/integrations/chat-sdk-resend",
+      "icon": "chat-sdk-resend"
+    },
+    {
+      "id": "chat-sdk-gmail",
+      "name": "Gmail",
+      "category": "channels",
+      "description": "Turn labelled Gmail threads into agent conversations via the Chat SDK.",
+      "url": "https://eve.dev/integrations/chat-sdk-gmail",
+      "icon": "chat-sdk-gmail"
+    },
+    {
+      "id": "agent-browser",
+      "name": "agent-browser",
+      "category": "extensions",
+      "description": "Add browser automation tools backed by agent-browser to an eve agent.",
+      "url": "https://eve.dev/integrations/agent-browser",
+      "icon": "agent-browser"
+    },
+    {
+      "id": "blitzreels",
+      "name": "BlitzReels",
+      "category": "extensions",
+      "description": "Turn long videos into short clips, generate media, repair edits, and export.",
+      "url": "https://eve.dev/integrations/blitzreels",
+      "icon": "blitzreels"
+    },
+    {
+      "id": "mux-video",
+      "name": "Mux Video",
+      "category": "extensions",
+      "description": "Create and inspect video assets, make clips, and run Mux Robots workflows.",
+      "url": "https://eve.dev/integrations/mux-video",
+      "icon": "mux-video"
+    },
+    {
+      "id": "browserbase",
+      "name": "Browserbase",
+      "category": "extensions",
+      "description": "Search, fetch, and automate the web with Browserbase and Stagehand.",
+      "url": "https://eve.dev/integrations/browserbase",
+      "icon": "browserbase"
+    },
+    {
+      "id": "github-tools",
+      "name": "GitHub Tools",
+      "category": "extensions",
+      "description": "Add scoped GitHub tools with Vercel Connect authentication and approval rules.",
+      "url": "https://eve.dev/integrations/github-tools",
+      "icon": "github-tools"
+    },
+    {
+      "id": "jetty",
+      "name": "Jetty",
+      "category": "extensions",
+      "description": "Grade agent turns, compare experiments, and store durable evaluation trajectories.",
+      "url": "https://eve.dev/integrations/jetty",
+      "icon": "jetty"
+    },
+    {
+      "id": "link",
+      "name": "Link",
+      "category": "extensions",
+      "description": "Give your eve agent guarded access to Link wallet and purchase tools.",
+      "url": "https://eve.dev/integrations/link",
+      "icon": "link"
+    },
+    {
+      "id": "kernel",
+      "name": "KERNEL",
+      "category": "extensions",
+      "description": "Let your eve agent use the Internet with KERNEL browser infra, o11y, and stealth. Integrated natively with Vercel Connect and AI Gateway.",
+      "url": "https://eve.dev/integrations/kernel",
+      "icon": "kernel"
+    },
+    {
+      "id": "hindsight",
+      "name": "Hindsight",
+      "category": "extensions",
+      "description": "Recall relevant context before every turn and retain each exchange automatically.",
+      "url": "https://eve.dev/integrations/hindsight",
+      "icon": "hindsight"
+    },
+    {
+      "id": "file",
+      "name": "File memory",
+      "category": "memory",
+      "description": "Store durable per-principal memory in a private Vercel Blob store provisioned for the agent.",
+      "url": "https://eve.dev/integrations/file",
+      "icon": "file"
+    },
+    {
+      "id": "supermemory",
+      "name": "Supermemory",
+      "category": "memory",
+      "description": "Give your agents long-term memory, user profiles, and SuperRAG across conversations and context.",
+      "url": "https://eve.dev/integrations/supermemory",
+      "icon": "supermemory"
+    },
+    {
+      "id": "upstash-agentkit",
+      "name": "Upstash AgentKit",
+      "category": "memory",
+      "description": "Give your agents ranked recall and automatic capture on Upstash Redis, or a Redis backend for file memory.",
+      "url": "https://eve.dev/integrations/upstash-agentkit",
+      "icon": "upstash-agentkit"
+    },
+    {
+      "id": "arcana",
+      "name": "Kybernesis Arcana",
+      "category": "memory",
+      "description": "Give your agents workspace-scoped long-term memory with automatic recall and deliberate storage.",
+      "url": "https://eve.dev/integrations/arcana",
+      "icon": "arcana"
+    },
+    {
+      "id": "browser-use",
+      "name": "Browser Use",
+      "category": "connectors",
+      "description": "Run managed browser automation tasks through Browser Use's MCP server.",
+      "url": "https://eve.dev/integrations/browser-use",
+      "icon": "browser-use"
+    },
+    {
+      "id": "vercel",
+      "name": "Vercel",
+      "category": "connectors",
+      "description": "Manage Vercel projects, deployments, and logs through Vercel's MCP server.",
+      "url": "https://eve.dev/integrations/vercel",
+      "icon": "vercel"
+    },
+    {
+      "id": "linear",
+      "name": "Linear",
+      "category": "connectors",
+      "description": "Issues, projects, cycles, and comments via Linear's MCP server.",
+      "url": "https://eve.dev/integrations/linear",
+      "icon": "linear"
+    },
+    {
+      "id": "notion",
+      "name": "Notion",
+      "category": "connectors",
+      "description": "Search and edit Notion pages and databases over MCP or OpenAPI.",
+      "url": "https://eve.dev/integrations/notion",
+      "icon": "notion"
+    },
+    {
+      "id": "datadog",
+      "name": "Datadog",
+      "category": "connectors",
+      "description": "Query metrics, monitors, and logs through Datadog's MCP server.",
+      "url": "https://eve.dev/integrations/datadog",
+      "icon": "datadog"
+    },
+    {
+      "id": "honeycomb",
+      "name": "Honeycomb",
+      "category": "connectors",
+      "description": "Explore traces and run queries through Honeycomb's MCP server.",
+      "url": "https://eve.dev/integrations/honeycomb",
+      "icon": "honeycomb"
+    },
+    {
+      "id": "agentcard",
+      "name": "Agentcard",
+      "category": "connectors",
+      "description": "let agents buy online",
+      "url": "https://eve.dev/integrations/agentcard",
+      "icon": "agentcard"
+    },
+    {
+      "id": "airtable",
+      "name": "Airtable",
+      "category": "connectors",
+      "description": "Bases, tables, and records through Airtable's MCP server.",
+      "url": "https://eve.dev/integrations/airtable",
+      "icon": "airtable"
+    },
+    {
+      "id": "bitly",
+      "name": "Bitly",
+      "category": "connectors",
+      "description": "Shorten links, generate QR Codes, and track performance.",
+      "url": "https://eve.dev/integrations/bitly",
+      "icon": "bitly"
+    },
+    {
+      "id": "brex",
+      "name": "Brex",
+      "category": "connectors",
+      "description": "Expenses, cards, and cash through Brex's finance automation.",
+      "url": "https://eve.dev/integrations/brex",
+      "icon": "brex"
+    },
+    {
+      "id": "candid",
+      "name": "Candid",
+      "category": "connectors",
+      "description": "Research nonprofits and funders using Candid's data.",
+      "url": "https://eve.dev/integrations/candid",
+      "icon": "candid"
+    },
+    {
+      "id": "clickhouse",
+      "name": "ClickHouse",
+      "category": "connectors",
+      "description": "Query and explore your ClickHouse Cloud data.",
+      "url": "https://eve.dev/integrations/clickhouse",
+      "icon": "clickhouse"
+    },
+    {
+      "id": "cloudinary",
+      "name": "Cloudinary",
+      "category": "connectors",
+      "description": "Manage, transform, and deliver your images and videos.",
+      "url": "https://eve.dev/integrations/cloudinary",
+      "icon": "cloudinary"
+    },
+    {
+      "id": "coda",
+      "name": "Coda",
+      "category": "connectors",
+      "description": "Create, search, and update docs and tables.",
+      "url": "https://eve.dev/integrations/coda",
+      "icon": "coda"
+    },
+    {
+      "id": "context",
+      "name": "context.dev",
+      "category": "connectors",
+      "description": "search, scrape, extract, and monitor live web data.",
+      "url": "https://eve.dev/integrations/context",
+      "icon": "context"
+    },
+    {
+      "id": "egnyte",
+      "name": "Egnyte",
+      "category": "connectors",
+      "description": "Securely access and analyze Egnyte content.",
+      "url": "https://eve.dev/integrations/egnyte",
+      "icon": "egnyte"
+    },
+    {
+      "id": "embat",
+      "name": "Embat",
+      "category": "connectors",
+      "description": "Ask Embat about cash, debt, payments, and accounting.",
+      "url": "https://eve.dev/integrations/embat",
+      "icon": "embat"
+    },
+    {
+      "id": "hugging-face",
+      "name": "Hugging Face",
+      "category": "connectors",
+      "description": "Access the Hugging Face Hub and thousands of Gradio apps.",
+      "url": "https://eve.dev/integrations/hugging-face",
+      "icon": "hugging-face"
+    },
+    {
+      "id": "local-falcon",
+      "name": "Local Falcon",
+      "category": "connectors",
+      "description": "AI visibility and local search intelligence.",
+      "url": "https://eve.dev/integrations/local-falcon",
+      "icon": "local-falcon"
+    },
+    {
+      "id": "make",
+      "name": "Make",
+      "category": "connectors",
+      "description": "Run Make scenarios and manage your Make account.",
+      "url": "https://eve.dev/integrations/make",
+      "icon": "make"
+    },
+    {
+      "id": "manufact",
+      "name": "Manufact",
+      "category": "connectors",
+      "description": "Deploy and monitor MCP servers with Manufact.",
+      "url": "https://eve.dev/integrations/manufact",
+      "icon": "manufact"
+    },
+    {
+      "id": "mem0",
+      "name": "Mem0",
+      "category": "connectors",
+      "description": "Persistent memory for AI agents and assistants.",
+      "url": "https://eve.dev/integrations/mem0",
+      "icon": "mem0"
+    },
+    {
+      "id": "miro",
+      "name": "Miro",
+      "category": "connectors",
+      "description": "Access and create content on Miro boards.",
+      "url": "https://eve.dev/integrations/miro",
+      "icon": "miro"
+    },
+    {
+      "id": "mixpanel",
+      "name": "Mixpanel",
+      "category": "connectors",
+      "description": "Analyze, query, and manage your Mixpanel data.",
+      "url": "https://eve.dev/integrations/mixpanel",
+      "icon": "mixpanel"
+    },
+    {
+      "id": "natural",
+      "name": "Natural",
+      "category": "connectors",
+      "description": "Send, request, and manage payments with Natural.",
+      "url": "https://eve.dev/integrations/natural",
+      "icon": "natural"
+    },
+    {
+      "id": "neon",
+      "name": "Neon",
+      "category": "connectors",
+      "description": "Manage Neon projects, run queries, and make schema changes.",
+      "url": "https://eve.dev/integrations/neon",
+      "icon": "neon"
+    },
+    {
+      "id": "netlify",
+      "name": "Netlify",
+      "category": "connectors",
+      "description": "Create, deploy, manage, and secure websites on Netlify.",
+      "url": "https://eve.dev/integrations/netlify",
+      "icon": "netlify"
+    },
+    {
+      "id": "oreilly",
+      "name": "O'Reilly",
+      "category": "connectors",
+      "description": "Discover O'Reilly's expert learning content.",
+      "url": "https://eve.dev/integrations/oreilly",
+      "icon": "oreilly"
+    },
+    {
+      "id": "planetscale",
+      "name": "PlanetScale",
+      "category": "connectors",
+      "description": "Authenticated access to your PlanetScale Postgres and MySQL databases.",
+      "url": "https://eve.dev/integrations/planetscale",
+      "icon": "planetscale"
+    },
+    {
+      "id": "posthog",
+      "name": "PostHog",
+      "category": "connectors",
+      "description": "Query, analyze, and manage your PostHog insights.",
+      "url": "https://eve.dev/integrations/posthog",
+      "icon": "posthog"
+    },
+    {
+      "id": "postman",
+      "name": "Postman",
+      "category": "connectors",
+      "description": "Give API context to your coding agents with Postman.",
+      "url": "https://eve.dev/integrations/postman",
+      "icon": "postman"
+    },
+    {
+      "id": "razorpay",
+      "name": "Razorpay",
+      "category": "connectors",
+      "description": "Razorpay payments, settlements, and dashboard data.",
+      "url": "https://eve.dev/integrations/razorpay",
+      "icon": "razorpay"
+    },
+    {
+      "id": "sanity",
+      "name": "Sanity",
+      "category": "connectors",
+      "description": "Query and edit Sanity content, inspect schemas, and manage releases.",
+      "url": "https://eve.dev/integrations/sanity",
+      "icon": "sanity"
+    },
+    {
+      "id": "sentry",
+      "name": "Sentry",
+      "category": "connectors",
+      "description": "Search, query, and debug errors intelligently.",
+      "url": "https://eve.dev/integrations/sentry",
+      "icon": "sentry"
+    },
+    {
+      "id": "similarweb",
+      "name": "Similarweb",
+      "category": "connectors",
+      "description": "Real-time web, mobile app, and market data.",
+      "url": "https://eve.dev/integrations/similarweb",
+      "icon": "similarweb"
+    },
+    {
+      "id": "shopify",
+      "name": "Shopify",
+      "category": "connectors",
+      "description": "Search products and manage carts and checkouts on a Shopify storefront.",
+      "url": "https://eve.dev/integrations/shopify",
+      "icon": "shopify"
+    },
+    {
+      "id": "stripe",
+      "name": "Stripe",
+      "category": "connectors",
+      "description": "Payment processing and financial infrastructure tools.",
+      "url": "https://eve.dev/integrations/stripe",
+      "icon": "stripe"
+    },
+    {
+      "id": "supabase",
+      "name": "Supabase",
+      "category": "connectors",
+      "description": "Manage databases, authentication, and storage.",
+      "url": "https://eve.dev/integrations/supabase",
+      "icon": "supabase"
+    },
+    {
+      "id": "ticket-tailor",
+      "name": "Ticket Tailor",
+      "category": "connectors",
+      "description": "Manage tickets, orders, and events with Ticket Tailor.",
+      "url": "https://eve.dev/integrations/ticket-tailor",
+      "icon": "ticket-tailor"
+    },
+    {
+      "id": "ticktick",
+      "name": "TickTick",
+      "category": "connectors",
+      "description": "Search, create, and manage your tasks and habits in TickTick.",
+      "url": "https://eve.dev/integrations/ticktick",
+      "icon": "ticktick"
+    },
+    {
+      "id": "tinybird",
+      "name": "Tinybird",
+      "category": "connectors",
+      "description": "Query pipes and data sources in your Tinybird Workspace.",
+      "url": "https://eve.dev/integrations/tinybird",
+      "icon": "tinybird"
+    },
+    {
+      "id": "todoist",
+      "name": "Todoist",
+      "category": "connectors",
+      "description": "Search, complete, and manage your tasks in Todoist.",
+      "url": "https://eve.dev/integrations/todoist",
+      "icon": "todoist"
+    },
+    {
+      "id": "webflow",
+      "name": "Webflow",
+      "category": "connectors",
+      "description": "Manage Webflow CMS, pages, assets, and sites.",
+      "url": "https://eve.dev/integrations/webflow",
+      "icon": "webflow"
+    },
+    {
+      "id": "wix",
+      "name": "Wix",
+      "category": "connectors",
+      "description": "Manage and build sites and apps on Wix.",
+      "url": "https://eve.dev/integrations/wix",
+      "icon": "wix"
+    },
+    {
+      "id": "zapier",
+      "name": "Zapier",
+      "category": "connectors",
+      "description": "Automate workflows across thousands of apps.",
+      "url": "https://eve.dev/integrations/zapier",
+      "icon": "zapier"
+    },
+    {
+      "id": "zomato",
+      "name": "Zomato",
+      "category": "connectors",
+      "description": "Online food ordering and delivery through Zomato.",
+      "url": "https://eve.dev/integrations/zomato",
+      "icon": "zomato"
+    },
+    {
+      "id": "braintrust",
+      "name": "Braintrust",
+      "category": "observability",
+      "description": "Export AI SDK spans to Braintrust for tracing, evals, and monitoring.",
+      "url": "https://eve.dev/integrations/braintrust",
+      "icon": "braintrust"
+    },
+    {
+      "id": "posthog-instrumentation",
+      "name": "PostHog",
+      "category": "observability",
+      "description": "Send agent traces and generations to PostHog AI Observability.",
+      "url": "https://eve.dev/integrations/posthog-instrumentation",
+      "icon": "posthog-instrumentation"
+    },
+    {
+      "id": "sentry-instrumentation",
+      "name": "Sentry",
+      "category": "observability",
+      "description": "Send agent traces to Sentry's OTLP endpoint for tracing and debugging.",
+      "url": "https://eve.dev/integrations/sentry-instrumentation",
+      "icon": "sentry-instrumentation"
+    },
+    {
+      "id": "datadog-instrumentation",
+      "name": "Datadog",
+      "category": "observability",
+      "description": "Export agent traces to Datadog APM alongside the rest of your stack.",
+      "url": "https://eve.dev/integrations/datadog-instrumentation",
+      "icon": "datadog-instrumentation"
+    },
+    {
+      "id": "honeycomb-instrumentation",
+      "name": "Honeycomb",
+      "category": "observability",
+      "description": "Send OpenTelemetry traces to Honeycomb and query every agent turn.",
+      "url": "https://eve.dev/integrations/honeycomb-instrumentation",
+      "icon": "honeycomb-instrumentation"
+    },
+    {
+      "id": "arize",
+      "name": "Arize",
+      "category": "observability",
+      "description": "Export traces to Arize AX for LLM observability and evaluation.",
+      "url": "https://eve.dev/integrations/arize",
+      "icon": "arize"
+    },
+    {
+      "id": "raindrop",
+      "name": "Raindrop",
+      "category": "observability",
+      "description": "Send agent traces to Raindrop to detect and debug AI product issues.",
+      "url": "https://eve.dev/integrations/raindrop",
+      "icon": "raindrop"
+    },
+    {
+      "id": "jaeger",
+      "name": "Jaeger",
+      "category": "observability",
+      "description": "Trace your agent with a local or self-hosted Jaeger OTLP backend.",
+      "url": "https://eve.dev/integrations/jaeger",
+      "icon": "jaeger"
+    }
+  ]
+}

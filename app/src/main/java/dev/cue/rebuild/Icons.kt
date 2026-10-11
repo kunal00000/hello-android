@@ -14,6 +14,7 @@ enum class Glyph(@DrawableRes val resource: Int) {
     Back(R.drawable.cue_back),
     Next(R.drawable.cue_next),
     Close(R.drawable.cue_close),
+    Selector(R.drawable.cue_selector),
     Plus(R.drawable.huge_plus),
     Search(R.drawable.huge_search),
     User(R.drawable.huge_user),
@@ -53,6 +54,10 @@ enum class Glyph(@DrawableRes val resource: Int) {
     Trash(R.drawable.huge_trash),
     Square(R.drawable.huge_square),
     Brush(R.drawable.huge_brush),
+    Calendar(R.drawable.huge_calendar),
+    Bell(R.drawable.huge_bell),
+    Contacts(R.drawable.huge_contacts),
+    Call(R.drawable.huge_call),
 }
 
 @Composable

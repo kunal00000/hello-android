@@ -149,11 +149,17 @@ fun CueTheme(dark: Boolean = false, content: @Composable () -> Unit) {
 }
 
 @Composable
-fun Asset(name: String, modifier: Modifier = Modifier, recolor: Color? = null) {
+fun Asset(
+    name: String,
+    modifier: Modifier = Modifier,
+    recolor: Color? = null,
+    folder: String = "cue",
+) {
     val context = LocalContext.current
     val picture =
-        remember(name, recolor) {
-            var xml = context.assets.open("cue/$name.svg").bufferedReader().use { it.readText() }
+        remember(name, recolor, folder) {
+            var xml =
+                context.assets.open("$folder/$name.svg").bufferedReader().use { it.readText() }
             if (recolor != null)
                 xml =
                     xml.replace(
@@ -227,6 +233,7 @@ fun Header(
     subtitle: String? = null,
     trailing: (@Composable () -> Unit)? = null,
     buttonBackground: Color = MaterialTheme.colorScheme.surface,
+    backGlyph: Glyph = Glyph.Back,
 ) {
     Box(
         modifier
@@ -236,7 +243,7 @@ fun Header(
         contentAlignment = Alignment.Center,
     ) {
         RoundButton(
-            Glyph.Back,
+            backGlyph,
             "Back",
             Modifier.align(Alignment.CenterStart),
             background = buttonBackground,

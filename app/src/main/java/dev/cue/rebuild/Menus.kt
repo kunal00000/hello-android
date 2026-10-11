@@ -27,7 +27,7 @@ import androidx.compose.ui.window.PopupProperties
 // Home + and Add Skills + in Cue share this rounded, softly outlined menu surface.
 @Composable
 fun ActionMenu(
-    items: List<Pair<Glyph, String>>,
+    items: List<Pair<Glyph?, String>>,
     dismiss: () -> Unit,
     width: Dp = 238.dp,
     alignment: Alignment = Alignment.TopEnd,
@@ -78,8 +78,10 @@ fun ActionMenu(
                             .padding(horizontal = 24.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(icon, size = 20.dp)
-                        Spacer(Modifier.width(12.dp))
+                        if (icon != null) {
+                            Icon(icon, size = 20.dp)
+                            Spacer(Modifier.width(12.dp))
+                        }
                         Text(label, style = Cue.Label)
                     }
                 }

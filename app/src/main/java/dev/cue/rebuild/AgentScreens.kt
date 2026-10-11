@@ -129,7 +129,6 @@ fun AgentScreen(state: CueState, agent: Agent, onAvatar: () -> Unit, onPhone: ()
             )
             Spacer(Modifier.height(12.dp))
             Group(Modifier.padding(horizontal = Cue.PageInset)) {
-                SettingRow("Apps", Glyph.Box, onClick = { state.open(Screen.Apps) })
                 SettingRow(
                     "Instructions",
                     Glyph.Book,
@@ -144,7 +143,7 @@ fun AgentScreen(state: CueState, agent: Agent, onAvatar: () -> Unit, onPhone: ()
             }
             Spacer(Modifier.height(32.dp))
             Text(
-                "Integration",
+                "Integrations",
                 Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
@@ -153,10 +152,10 @@ fun AgentScreen(state: CueState, agent: Agent, onAvatar: () -> Unit, onPhone: ()
             Spacer(Modifier.height(12.dp))
             Group(Modifier.padding(horizontal = Cue.PageInset)) {
                 SettingRow(
-                    "Messenger",
-                    Glyph.Chat,
+                    "Channels, apps & devices",
+                    Glyph.Box,
                     divider = false,
-                    onClick = { state.open(Screen.Messenger) },
+                    onClick = { state.open(Screen.Integrations) },
                 )
             }
             Spacer(Modifier.height(32.dp))

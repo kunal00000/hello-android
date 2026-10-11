@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
@@ -140,7 +141,6 @@ fun ChatScreen(state: CueState, agent: Agent) {
                 if (files.size < 3) files = files + it
                 else state.error = "You can attach up to three files."
             },
-            { draft = if (draft.isBlank()) it else "$draft\n$it" },
             { state.error = it },
         )
     val speech =
@@ -155,20 +155,30 @@ fun ChatScreen(state: CueState, agent: Agent) {
                 }
         }
     // Follow a streaming response only while the reader is already at the bottom.
-    var followResponse by remember(agent.id) { mutableStateOf(true) }
+    var followResponse by rememberSaveable(agent.id) { mutableStateOf(true) }
     LaunchedEffect(list) {
         snapshotFlow { list.isScrollInProgress to list.canScrollForward }
             .collect { (scrolling, more) -> if (scrolling) followResponse = !more }
     }
-    LaunchedEffect(agent.messages.size, agent.messages.lastOrNull()?.text, busy) {
-        if (followResponse && agent.messages.isNotEmpty())
-            list.scrollToItem(agent.messages.size - 1)
+    // Re-entering a saved page must not replay a scroll intended for new content.
+    val lastMessage = agent.messages.lastOrNull()
+    val scrollRevision =
+        "${agent.messages.size}:${lastMessage?.id}:${lastMessage?.text?.length}:$busy"
+    var observedRevision by rememberSaveable(agent.id) { mutableStateOf<String?>(null) }
+    LaunchedEffect(scrollRevision) {
+        if (observedRevision != scrollRevision) {
+            observedRevision = scrollRevision
+            if (followResponse && agent.messages.isNotEmpty())
+                list.scrollToItem(agent.messages.size - 1)
+        }
     }
     val density = LocalDensity.current
     val backdrop = MaterialTheme.colorScheme.background
     var composerHeight by remember { mutableIntStateOf(0) }
     var footerHeight by
-        remember(density) { mutableIntStateOf(with(density) { 100.dp.roundToPx() }) }
+        rememberSaveable(density.density, density.fontScale) {
+            mutableIntStateOf(with(density) { 100.dp.roundToPx() })
+        }
     BoxWithConstraints(Modifier.fillMaxSize().imePadding()) {
         val bubbleMaxWidth = maxWidth * .85f
         LazyColumn(
@@ -300,30 +310,32 @@ fun ChatScreen(state: CueState, agent: Agent) {
                 .padding(top = 80.dp)
         ) {
             agent.pendingInputs.firstOrNull()?.let { input ->
-                Column(
-                    Modifier.fillMaxWidth()
-                        .heightIn(max = 220.dp)
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(
-                        "Reply to continue",
-                        style = Cue.Caption,
-                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                    )
-                    input.choices.forEach { choice ->
-                        PillButton(
-                            choice.label,
-                            Modifier.fillMaxWidth(),
-                            enabled = !busy,
-                            primary = false,
-                        ) {
-                            followResponse = true
-                            state.send(agent.id, choice.label, optionId = choice.id)
+                if (input.deviceAction != null) DeviceRequestCard(state, agent, input)
+                else
+                    Column(
+                        Modifier.fillMaxWidth()
+                            .heightIn(max = 220.dp)
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            "Reply to continue",
+                            style = Cue.Caption,
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                        )
+                        input.choices.forEach { choice ->
+                            PillButton(
+                                choice.label,
+                                Modifier.fillMaxWidth(),
+                                enabled = !busy,
+                                primary = false,
+                            ) {
+                                followResponse = true
+                                state.send(agent.id, choice.label, optionId = choice.id)
+                            }
                         }
                     }
-                }
             }
             if (files.isNotEmpty())
                 Row(
@@ -391,8 +403,6 @@ fun ChatScreen(state: CueState, agent: Agent) {
                                 Glyph.Camera to "Camera",
                                 Glyph.Image to "Photos",
                                 Glyph.Clip to "Files",
-                                Glyph.User to "Contacts",
-                                Glyph.Location to "Location",
                             ),
                         dismiss = { attachments = false },
                         alignment = Alignment.BottomStart,

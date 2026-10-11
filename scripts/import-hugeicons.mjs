@@ -22,14 +22,15 @@ const icons = {
   Clip: 'Attachment01', Location: 'Location01', Bot: 'Robotic', Group: 'UserGroup',
   Scan: 'Scan', Skill: 'Puzzle', Terminal: 'ComputerTerminal01', Swap: 'Exchange01',
   External: 'ArrowUpRight01', Stop: 'Stop', Trash: 'Delete02', Square: 'Square',
-  Brush: 'PaintBrush01',
+  Brush: 'PaintBrush01', Calendar: 'Calendar03', Bell: 'Notification01',
+  Contacts: 'Contact02', Call: 'Call',
 };
 const root = fileURLToPath(new URL('../app/src/main/', import.meta.url));
 const drawable = join(root, 'res/drawable');
 await mkdir(drawable, { recursive: true });
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
 // Keep the original simple navigation/close shapes; these are maintained locally.
-const entries = ['Back', 'Next', 'Close'].map(glyph =>
+const entries = ['Back', 'Next', 'Close', 'Selector'].map(glyph =>
   `    ${glyph}(R.drawable.cue_${glyph.toLowerCase()}),`
 );
 for (const [glyph, name] of Object.entries(icons)) {

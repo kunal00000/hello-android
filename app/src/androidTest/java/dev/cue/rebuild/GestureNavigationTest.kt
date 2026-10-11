@@ -2,6 +2,7 @@ package dev.cue.rebuild
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import org.junit.Assert.*
@@ -12,6 +13,11 @@ class GestureNavigationTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
     private fun launch(screen: Screen): CueState {
+        compose.runOnUiThread {
+            compose.activity.window.addFlags(
+                android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+            )
+        }
         val state = CueState(compose.activity.application, "gesture-test-${System.nanoTime()}")
         if (screen != Screen.Home) state.open(screen, state.agent().id)
         compose.setContent { CueTheme { CueApp(state) } }
@@ -103,41 +109,154 @@ class GestureNavigationTest {
     }
 
     @Test
-    fun homeAndSettingsRestoreHistoryAndNewDestinationsReplaceIt() {
+    fun settingsHomeAndLastChatHaveStableNeighbors() {
         val state = launch(Screen.Home)
         swipeForward(.7f)
         compose.runOnIdle { assertEquals(Screen.Home, state.route.screen) }
         swipeBack(.7f)
         compose.runOnIdle { assertEquals(Screen.Settings, state.route.screen) }
-        swipeBack(.04f)
+        // Settings is left of Home: dragging left returns to the center.
+        swipeForward(.08f)
         compose.runOnIdle { assertEquals(Screen.Home, state.route.screen) }
-        swipeForward(.7f)
-        compose.runOnIdle { assertEquals(Screen.Settings, state.route.screen) }
-        swipeBack(.04f)
         compose.runOnIdle {
-            state.open(Screen.Chat, state.agent().id)
-            state.back()
+            state.create("Orbit", AvatarSpec())
+            state.home()
         }
-        swipeForward(.7f)
-        compose.runOnIdle { assertEquals(Screen.Chat, state.route.screen) }
+        compose.onNodeWithText(state.agents[1].name, substring = false).performClick()
+        val chatId = state.agents[1].id
+        compose.runOnIdle { assertEquals(chatId, state.route.agentId) }
         swipeBack()
         swipeBack(.7f)
+        compose.runOnIdle { assertEquals(Screen.Settings, state.route.screen) }
+        swipeForward(.08f)
+        swipeForward(.7f)
+        compose.runOnIdle {
+            assertEquals(Route(Screen.Chat, chatId), state.route)
+            assertEquals(listOf(Route(Screen.Home), Route(Screen.Chat, chatId)), state.routes)
+        }
+        swipeForward()
+        compose.runOnIdle { assertEquals(Route(Screen.Agent, chatId), state.route) }
+        swipeBack(.23f)
+        swipeBack()
+        compose.runOnIdle { assertEquals(Screen.Home, state.route.screen) }
+    }
+
+    @Test
+    fun pageMovesBeforeReleaseAndCancelledDragRestoresIt() {
+        val state = launch(Screen.Chat)
+        val navigation = compose.onNodeWithTag("navigation")
+        val left = navigation.fetchSemanticsNode().boundsInRoot.left
+        val width = navigation.fetchSemanticsNode().boundsInRoot.width
+        navigation.performTouchInput {
+            down(Offset(width * .25f, height * .5f))
+            moveTo(Offset(width * .45f, height * .5f), 300)
+        }
+        compose.waitForIdle()
+        compose.runOnIdle { assertEquals(Screen.Chat, state.route.screen) }
+        val draggedLeft = compose.onNodeWithTag("page-Chat").fetchSemanticsNode().boundsInRoot.left
+        assertTrue(
+            "Page must follow the finger before navigation commits",
+            draggedLeft > left + width * .15f,
+        )
+        navigation.performTouchInput {
+            moveTo(Offset(width * .27f, height * .5f), 300)
+            up()
+        }
+        compose.waitForIdle()
+        compose.runOnIdle { assertEquals(Screen.Chat, state.route.screen) }
+        assertEquals(
+            left,
+            compose.onNodeWithTag("page-Chat").fetchSemanticsNode().boundsInRoot.left,
+            1f,
+        )
+    }
+
+    @Test
+    fun backDuringADragDoesNotCommitThePreviewedPage() {
+        val state = launch(Screen.Chat)
+        val navigation = compose.onNodeWithTag("navigation")
+        navigation.performTouchInput {
+            down(Offset(width * .8f, height * .5f))
+            moveTo(Offset(width * .6f, height * .5f), 300)
+        }
+        compose.runOnIdle { state.back() }
+        navigation.performTouchInput { up() }
+        compose.waitForIdle()
+        compose.runOnIdle { assertEquals(Screen.Home, state.route.screen) }
+        compose.onNodeWithTag("page-Home").assertIsDisplayed()
+        compose.onNodeWithTag("page-Agent").assertDoesNotExist()
+    }
+
+    @Test
+    fun returningToChatKeepsReadingPosition() {
+        val state = launch(Screen.Chat)
+        compose.runOnIdle {
+            state.update(
+                state
+                    .agent()
+                    .copy(
+                        messages =
+                            List(40) { index ->
+                                Message(
+                                    text =
+                                        "Message $index. This is a longer response to read while checking that navigation preserves the conversation position.",
+                                    user = false,
+                                )
+                            }
+                    )
+            )
+        }
+        val messages = compose.onNode(hasScrollToIndexAction())
+        for (readOlderMessages in listOf(false, true)) {
+            if (readOlderMessages)
+                messages.performTouchInput {
+                    swipe(
+                        Offset(width * .5f, height * .45f),
+                        Offset(width * .5f, height * .85f),
+                        400,
+                    )
+                }
+            compose.waitForIdle()
+            val viewport = messages.fetchSemanticsNode().boundsInRoot
+            val anchor =
+                compose
+                    .onAllNodes(hasText("Message", substring = true))
+                    .fetchSemanticsNodes()
+                    .filter {
+                        it.boundsInRoot.top > viewport.top + 2 &&
+                            it.boundsInRoot.bottom < viewport.bottom
+                    }
+                    .minBy { it.boundsInRoot.top }
+            val anchorText = anchor.config[SemanticsProperties.Text].joinToString("") { it.text }
+            val position = anchor.boundsInRoot.top
+            compose.onNodeWithTag("navigation").performTouchInput {
+                swipe(Offset(width * .97f, height * .5f), Offset(width * .3f, height * .5f), 400)
+            }
+            compose.runOnIdle { assertEquals(Screen.Agent, state.route.screen) }
+            swipeBack(.23f)
+            compose.runOnIdle { assertEquals(Screen.Chat, state.route.screen) }
+            assertEquals(
+                "Reading position changed (older messages: $readOlderMessages)",
+                position,
+                compose.onNodeWithText(anchorText).fetchSemanticsNode().boundsInRoot.top,
+                1f,
+            )
+        }
+    }
+
+    @Test
+    fun settingsButtonAndBackUseTheSameSpatialDirection() {
+        val state = launch(Screen.Home)
+        compose.onNodeWithContentDescription("Settings").performClick()
         compose.runOnIdle {
             assertEquals(Screen.Settings, state.route.screen)
-            assertTrue(state.forwardRoutes.isEmpty())
-            state.open(Screen.Language)
-            state.back()
+            assertEquals(1, state.navigationDirection)
         }
-        swipeForward(.04f)
+        compose.onNodeWithContentDescription("Back").performClick()
         compose.runOnIdle {
-            assertEquals(Screen.Language, state.route.screen)
-            state.back()
-            state.open(Screen.Skills)
-            assertTrue(state.forwardRoutes.isEmpty())
-            state.back()
+            assertEquals(Screen.Home, state.route.screen)
+            assertEquals(-1, state.navigationDirection)
         }
-        swipeForward(.04f)
-        compose.runOnIdle { assertEquals(Screen.Skills, state.route.screen) }
     }
 
     @Test
@@ -177,21 +296,16 @@ class GestureNavigationTest {
     }
 
     @Test
-    fun appPagingHasPriorityOverScreenNavigation() {
-        val state = launch(Screen.Apps)
-        val pager = compose.onNodeWithTag("app-categories")
-        pager.performTouchInput { swipeLeft() }
-        compose.onNodeWithText("Finance").assertIsSelected()
-        compose.onNodeWithText("Plaid").assertIsDisplayed()
-        pager.performTouchInput { swipeLeft() }
-        compose.onNodeWithText("Health").assertIsSelected()
-        pager.performTouchInput { swipeRight() }
-        compose.onNodeWithText("Finance").assertIsSelected()
-        compose.onNodeWithText("Travel").performClick()
-        compose.onNodeWithText("No apps found").assertIsDisplayed()
-        pager.performTouchInput { swipeLeft() }
-        compose.onNodeWithText("Productivity").assertIsSelected()
-        compose.onNodeWithText("Gmail").assertIsDisplayed()
+    fun integrationCategoryScrollingHasPriorityOverScreenNavigation() {
+        val state = launch(Screen.Integrations)
+        val categories = compose.onNodeWithTag("integration-categories")
+        categories.performTouchInput { swipeLeft() }
+        compose.runOnIdle { assertEquals(Screen.Integrations, state.route.screen) }
+        categories.performScrollToNode(hasText("Connectors"))
+        compose.onNode(hasText("Connectors") and isSelectable()).performClick()
+        compose.onNode(hasText("Connectors") and isSelectable()).assertIsSelected()
+        compose.onNodeWithTag("integration-list").performTouchInput { swipeUp() }
+        compose.runOnIdle { assertEquals(Screen.Integrations, state.route.screen) }
         swipeBack(.035f)
         compose.runOnIdle { assertEquals(Screen.Home, state.route.screen) }
     }

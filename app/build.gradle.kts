@@ -15,7 +15,21 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
-        buildConfigField("String", "BACKEND_URL", "\"http://127.0.0.1:2002\"")
+        buildConfigField(
+            "String",
+            "BACKEND_URL",
+            "\"https://superintelligence-puce.vercel.app/mobile/v1\"",
+        )
+    }
+
+    buildTypes {
+        getByName("debug") {
+            val localUrl = providers.gradleProperty("cueBackendUrl").orNull
+            if (localUrl != null) {
+                require(Regex("http://127\\.0\\.0\\.1:[0-9]+").matches(localUrl))
+                buildConfigField("String", "BACKEND_URL", "\"$localUrl\"")
+            }
+        }
     }
 
     compileOptions {
@@ -23,15 +37,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    kotlinOptions { jvmTarget = "17" }
 
     buildFeatures {
         compose = true
         buildConfig = true
     }
-
 }
 
 dependencies {
