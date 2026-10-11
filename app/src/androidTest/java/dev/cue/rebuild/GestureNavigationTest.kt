@@ -142,20 +142,20 @@ class GestureNavigationTest {
     }
 
     @Test
-    fun slowShortSwipeCommitsAtTwentyPercentAndSmallerDragCancels() {
+    fun slowShortSwipeCommitsAtEightPercentAndSmallerDragCancels() {
         val state = launch(Screen.Home)
         compose.onNodeWithTag("navigation").performTouchInput {
-            swipe(Offset(width * .3f, height * .5f), Offset(width * .48f, height * .5f), 1200)
+            swipe(Offset(width * .3f, height * .5f), Offset(width * .36f, height * .5f), 1200)
         }
         compose.waitForIdle()
         compose.runOnIdle { assertEquals(Screen.Home, state.route.screen) }
         compose.onNodeWithTag("navigation").performTouchInput {
-            swipe(Offset(width * .3f, height * .5f), Offset(width * .52f, height * .5f), 1200)
+            swipe(Offset(width * .3f, height * .5f), Offset(width * .39f, height * .5f), 1200)
         }
         compose.waitForIdle()
         compose.runOnIdle { assertEquals(Screen.Settings, state.route.screen) }
         compose.onNodeWithTag("navigation").performTouchInput {
-            swipe(Offset(width * .65f, height * .5f), Offset(width * .43f, height * .5f), 1200)
+            swipe(Offset(width * .65f, height * .5f), Offset(width * .56f, height * .5f), 1200)
         }
         compose.waitForIdle()
         compose.runOnIdle { assertEquals(Screen.Home, state.route.screen) }

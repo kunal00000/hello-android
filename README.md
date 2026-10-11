@@ -31,7 +31,7 @@ the original Markdown source. Code blocks have a separate **Copy code** action.
 Rendering uses [Multiplatform Markdown Renderer](https://github.com/mikepenz/multiplatform-markdown-renderer)
 0.33.0, compatible with this app’s Kotlin and Compose versions.
 
-Page swipes commit after 20% of the screen width; a deliberate reverse flick still
+Page swipes commit after 8% of the screen width; a deliberate reverse flick still
 cancels. Message bubbles, composer controls, and horizontal content scrollers retain
 their own gestures.
 

@@ -160,7 +160,7 @@ fun SwipeNavigation(
                                 commit =
                                     destination != null &&
                                         speed > -minFlingVelocity &&
-                                        (distance >= size.width * .2f ||
+                                        (distance >= size.width * .08f ||
                                             distance > minFlingDistance && speed > minFlingVelocity)
                                 break
                             }
